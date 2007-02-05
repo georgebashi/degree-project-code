@@ -1,0 +1,6 @@
+(fftw-3.1.2 fftwf_wisdom
+  (fftwf_codelet_r2hc_32 0 #x1040 #x1040 #x0 #x7873d85f #xee00c479 #x9a77751a #x28e8212c)
+  (fftwf_codelet_r2hcII_32 0 #x1040 #x1040 #x0 #xb0ddf36f #xb5da1fec #x3e1aa247 #x969d0435)
+  (fftwf_codelet_r2hc_32 0 #x1040 #x1040 #x0 #x4cdd51ff #xf57b8d87 #x435bf417 #x812effad)
+  (fftwf_codelet_hf_32 0 #x1040 #x1040 #x0 #xf6e43e81 #xcce9f1af #xf654dcb2 #x74ccad72)
+)
