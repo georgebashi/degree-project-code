@@ -34,23 +34,8 @@ void close_sf()
 */
 int read_window(float* output, int n)
 {
-    int read_length = n * sfinfo->channels;
-    float *in_buffer = malloc(sizeof(float) * read_length);
-    
-    // couldn't read n samples
-    if (!sf_readf_float(sf_in, in_buffer, n)) {
+    if (!sf_readf_float(sf_in, output, n)) {
             return 0;
     }
-    
-    int i, out_pos = 0;
-    for (i = 0; i < read_length; i++) {
-        output[out_pos] += in_buffer[i];
-        
-        if (i % sfinfo->channels == 0) {
-            output[out_pos++] /= sfinfo->channels;
-        }
-    }
-    
-    free(in_buffer);
-    return 1;
+    return n;
 }

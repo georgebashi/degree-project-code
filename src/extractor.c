@@ -94,7 +94,19 @@ int main(int argc, const char *argv[])
         float si = spectral_intensity(fft_output);
         float ss = spectral_smoothness(fft_output);
         float lr = linear_regression(fft_output);
-        print_csv_data(stdout, 4, "\"Intensity\",\"Centroid\",\"Smoothness\",\"Linear Regression (gradient)\"", si, sc, ss, lr);
+        
+        float zcr = zero_crossing_rate(sf_read_buffer);
+        
+        print_csv_data(
+            stdout,
+            5,
+            "\"Intensity\",\"Centroid\",\"Smoothness\",\"Linear Regression (gradient)\",\"Zero Crossing Rate\"",
+            si,
+            sc,
+            ss,
+            lr,
+            zcr
+        );
     }
 
     fft_stop();

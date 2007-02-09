@@ -60,36 +60,16 @@ float linear_regression(float *fft) {
     return ((BINS * sxy) - (sx * sy)) / ((BINS * sxx) - pow(sx, 2));
 }
 
-
-void analysis(float *fft, float *outputs) {
-    int i;
-    float sx = 5625088.0f, sxx = 82480665344.0f, sy = 0, syy = 0, sxy = 0, ss = 0, total_amp = 0, bins = 0;
-    const int last_bin = BINS - 1;
-    float current_amp;
-    for (i = 1; i < BINS; i++) {
-        current_amp = fft[i];
-        
-        bins += i * current_amp;  // sc
-        total_amp += current_amp;
-        
-        if (i > 1 && i < last_bin) { // ss
-            ss += (20 * log(current_amp)) - ((
-                (20 * logf(fft[i - 1])) +
-                (20 * logf(current_amp)) +
-                (20 * logf(fft[i + 1]))
-            ) / 3);
-        }
-        
-        sy += current_amp;
-        syy += pow(current_amp, 2);
-        sxy += i * 43 * current_amp;
-        
-        __builtin_prefetch(&fft[i+1], 0, 1);
-        __builtin_prefetch(&fft[i+2], 0, 1);
+float zero_crossing_rate(float *signal) {
+    int total = 0, i = 0;
+    for (i = 0; i < WINDOW_SIZE - 1; i++) {
+#ifdef ZCR_SCHWARZ
+        total += (signal[i] < 0 ? 1 : 0) ^ (signal[i + 1] < 0 ? 1 : 0);
+#else
+        total += ((signal[i] * signal[i + 1]) < 0);
+#endif
     }
-    outputs[0] = fft[0]; // si
-    outputs[1] = bins / total_amp; // sc
-    outputs[2] = ss;
-    outputs[3] = ((BINS * sxy) - (sx * sy)) / ((BINS * sxx) - pow(sx, 2));
+    return total * (1.0f / WINDOW_SIZE);
 }
+
 
