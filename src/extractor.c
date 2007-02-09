@@ -94,18 +94,23 @@ int main(int argc, const char *argv[])
         float si = spectral_intensity(fft_output);
         float ss = spectral_smoothness(fft_output);
         float lr = linear_regression(fft_output);
-        
         float zcr = zero_crossing_rate(sf_read_buffer);
+        float foa = first_order_autocorrelation(sf_read_buffer);
+        float spread = spectral_spread(sc, fft_output);
+        float sd = spectral_dissymmetry(sc, fft_output);
         
         print_csv_data(
             stdout,
-            5,
-            "\"Intensity\",\"Centroid\",\"Smoothness\",\"Linear Regression (gradient)\",\"Zero Crossing Rate\"",
+            ANALYSIS_OUTPUTS,
+            ANALYSIS_OUTPUT_CSV_HEADER,
             si,
             sc,
             ss,
             lr,
-            zcr
+            zcr,
+            foa,
+            spread,
+            sd
         );
     }
 

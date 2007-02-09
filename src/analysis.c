@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
+
 #include "common.h"
 #include "analysis.h"
 
@@ -72,4 +74,31 @@ float zero_crossing_rate(float *signal) {
     return total * (1.0f / WINDOW_SIZE);
 }
 
+float first_order_autocorrelation(float *signal) {
+    float total = 0;
+    int i = 0;
+    for (i = 0; i < WINDOW_SIZE; i++) {
+        total += signal[i] * signal[i + 1];
+    }
+    return total * (1.0f / WINDOW_SIZE);
+}
 
+float spectral_spread(float spectral_centroid, float *fft) {
+    float top = 0, bottom = 0;
+    int i = 0;
+    for (i = 0; i < WINDOW_SIZE; i++) {
+        top += fft[i] * pow((((float)i / BINS) * 22100) - spectral_centroid, 2);
+        bottom += fft[i];
+    }
+    return sqrtf(top / bottom);
+}
+
+float spectral_dissymmetry(float spectral_centroid, float *fft) {
+    float top = 0, bottom = 0;
+    int i = 0;
+    for (i = 0; i < WINDOW_SIZE; i++) {
+        top += fft[i] * pow((((float)i / BINS) * 22100) - spectral_centroid, 3);
+        bottom += fft[i];
+    }
+    return cbrtf(top / bottom);
+}
