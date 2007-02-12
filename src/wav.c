@@ -7,35 +7,35 @@
 #include <sndfile.h>
 
 #include "common.h"
-#include "snd.h"
+#include "wav.h"
 
 SNDFILE *sf_in;
 SF_INFO *sfinfo;
 
-void open_sf(char *filename)
+void wav_open(char *filename)
 {
-    sfinfo = malloc(sizeof(SF_INFO));
+    // calloc to make sure memory is clear
+    sfinfo = calloc(1, sizeof(SF_INFO));
     
-    if(!(sf_in = sf_open(filename, SFM_READ, sfinfo)))
-    {
+    if (!(sf_in = sf_open(filename, SFM_READ, sfinfo))) {
         printf("Error opening input file.\n");
         exit(EXIT_FAILURE);
     }
 }
 
-void close_sf()
+void wav_close()
 {
     sf_close(sf_in);
     free(sfinfo);
 }
 
 /*
-    read a specified amount from the file and convert to mono
+    read a specified amount from the file
 */
-int read_window(float* output, int n)
+int wav_read(float* output, int n)
 {
     if (!sf_readf_float(sf_in, output, n)) {
-            return 0;
+        return 0;
     }
     return n;
 }

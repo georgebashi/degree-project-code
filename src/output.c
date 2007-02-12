@@ -8,7 +8,8 @@
 int csv_row = 0;
 int csv_header_printed = 0;
 
-void print_csv_data(FILE * out, int columns, char *header, ...) {
+void print_csv_data(FILE * out, int columns, char *header, ...)
+{
     va_list args;
     int column;
     
@@ -20,7 +21,7 @@ void print_csv_data(FILE * out, int columns, char *header, ...) {
     }
     
     printf("%i,", csv_row++);
-    for(column = 0; column < columns; column++) {
+    for (column = 0; column < columns; column++) {
         double arg = va_arg(args, double);
         fprintf(out, "%f", arg);
         if (column != columns - 1) {

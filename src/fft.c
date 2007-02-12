@@ -23,12 +23,11 @@ fftwf_plan fft_setup(float *out)
     fft_input = fftwf_malloc(sizeof(float) * WINDOW_SIZE);
     float ang = (1.0 / WINDOW_SIZE) * TWOPI;
     int i;
-    for(i = 0; i < WINDOW_SIZE; i++)
-    {
+    for (i = 0; i < WINDOW_SIZE; i++) {
         hanning_window[i] = 0.5 - 0.5 * cos(ang * i);
     }
     FILE * wisdom;
-    if ((wisdom = fopen(".wisdom", "r")) != NULL && !reprofile) {
+    if ((wisdom = fopen(".wisdom", "r")) != NULL) {
         fftwf_import_wisdom_from_file(wisdom);
         fclose(wisdom);
         return fftwf_plan_r2r_1d(WINDOW_SIZE, fft_input, out, FFTW_R2HC, FFTW_EXHAUSTIVE);
@@ -43,7 +42,8 @@ fftwf_plan fft_setup(float *out)
     }
 }
 
-void fft_stop() {
+void fft_stop()
+{
     fftwf_free(fft_input);
     free(hanning_window);
 }
@@ -52,22 +52,14 @@ void fft_do_window(fftwf_plan *plan, float *in)
 {
     memcpy(fft_input, in, WINDOW_SIZE * sizeof(float));
     int i;
-    for (i = 0; i < WINDOW_SIZE; i++)
-    {
+    for (i = 0; i < WINDOW_SIZE; i++) {
         fft_input[i] *= hanning_window[i];
     }
     fftwf_execute(*plan);
-    
-    if (print_data == OPT_PRINT_WINDOW) {
-        int i;
-        for (i = 0; i < WINDOW_SIZE; i++) {
-            print_csv_data(stdout, 1, "\"FFT Input (first window)\"", fft_input[i]);
-        }
-        exit(0);
-    }
 }
 
-void fft_fix_output(float *output) {
+void fft_fix_output(float *output)
+{
     int i;
     // fix power
     output[0] *= output[0];

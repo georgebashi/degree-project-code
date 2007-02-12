@@ -1,4 +1,4 @@
-AC_INIT(src/extractor.c)
+AC_INIT(Feature Extractor, 0.1, http://svn.georgebashi.com/final_year_project)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
@@ -19,7 +19,8 @@ AC_CHECK_LIB(sndfile, sf_readf_float, , AC_MSG_ERROR(need libsndfile))
 AC_CHECK_LIB(popt, poptGetContext, , AC_MSG_ERROR(need libpopt))
 AC_CHECK_LIB(fftw3f, fftwf_plan_r2r_1d, , AC_MSG_ERROR(need fftw3 compiled with --enable-float))
 
-CFLAGS="-Wall -O0 -DDEBUG -g"
+# CFLAGS="-Wall -O0 -DDEBUG -g"
+CFLAGS="-O3 -funroll-loops -ffast-math"
 AC_SUBST(CFLAGS)
 
 

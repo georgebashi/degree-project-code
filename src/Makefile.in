@@ -88,11 +88,11 @@ VERSION = @VERSION@
 
 bin_PROGRAMS = extractor
 
-extractor_SOURCES = fft.c snd.c analysis.c output.c extractor.c
+extractor_SOURCES = fft.c wav.c analysis.c stats.c output.c extractor.c
 
 extractor_LIBS = -lfftw3f -lsndfile -lpopt
 
-noinst_HEADERS = common.h extractor.h fft.h snd.h analysis.h output.h
+noinst_HEADERS = common.h extractor.h fft.h wav.h analysis.h stats.h output.h
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -104,8 +104,8 @@ DEFS = @DEFS@ -I. -I$(srcdir) -I..
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-extractor_OBJECTS =  fft.$(OBJEXT) snd.$(OBJEXT) analysis.$(OBJEXT) \
-output.$(OBJEXT) extractor.$(OBJEXT)
+extractor_OBJECTS =  fft.$(OBJEXT) wav.$(OBJEXT) analysis.$(OBJEXT) \
+stats.$(OBJEXT) output.$(OBJEXT) extractor.$(OBJEXT)
 extractor_LDADD = $(LDADD)
 extractor_DEPENDENCIES = 
 extractor_LDFLAGS = 
@@ -123,7 +123,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = tar
 GZIP_ENV = --best
 DEP_FILES =  .deps/analysis.P .deps/extractor.P .deps/fft.P \
-.deps/output.P .deps/snd.P
+.deps/output.P .deps/stats.P .deps/wav.P
 SOURCES = $(extractor_SOURCES)
 OBJECTS = $(extractor_OBJECTS)
 
