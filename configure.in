@@ -1,12 +1,17 @@
-AC_INIT(Feature Extractor, 0.1, http://svn.georgebashi.com/final_year_project)
+AC_INIT(Feature Extractor, 0.2, http://svn.georgebashi.com/final_year_project)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(extractor, 0.1)
+AM_INIT_AUTOMAKE(extractor, 0.2)
 AM_CONFIG_HEADER(config.h)
 
-AC_LANG_C
-AC_PROG_CC
+CXXFLAGS="-Wall -O0 -DDEBUG -g -pg"
+# CXXFLAGS="-O3 -funroll-loops -ffast-math"
+AC_SUBST(CXXFLAGS)
+
+AC_PROG_CXX
+AC_LANG_CPLUSPLUS
+
 AC_PROG_CC_STDC
 AM_PROG_LIBTOOL
 AC_PROG_INSTALL
@@ -19,9 +24,7 @@ AC_CHECK_LIB(sndfile, sf_readf_float, , AC_MSG_ERROR(need libsndfile))
 AC_CHECK_LIB(popt, poptGetContext, , AC_MSG_ERROR(need libpopt))
 AC_CHECK_LIB(fftw3f, fftwf_plan_r2r_1d, , AC_MSG_ERROR(need fftw3 compiled with --enable-float))
 
-# CFLAGS="-Wall -O0 -DDEBUG -g"
-CFLAGS="-O3 -funroll-loops -ffast-math"
-AC_SUBST(CFLAGS)
+
 
 
 AC_OUTPUT(Makefile src/Makefile)

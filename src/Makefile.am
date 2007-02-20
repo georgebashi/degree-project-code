@@ -1,11 +1,11 @@
 
 bin_PROGRAMS = extractor
 
-extractor_SOURCES = fft.c wav.c analysis.c stats.c output.c extractor.c
+extractor_SOURCES = FFT.cc SoundFile.cc Features.cc extractor.cc
 
 extractor_LIBS = -lfftw3f -lsndfile -lpopt
 
-noinst_HEADERS = common.h extractor.h fft.h wav.h analysis.h stats.h output.h
+noinst_HEADERS = common.hh FFT.hh SoundFile.hh Features.hh
 
 # set the include path found by configure
 #INCLUDES= $(all_includes)
