@@ -3,6 +3,8 @@
 #include <sndfile.h>
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "common.hh"
 #include "SoundFile.hh"
@@ -10,18 +12,34 @@
 
 SoundFile::SoundFile(std::string filename)
 {
+    // find name for temp file
+    tmp_filename = tempnam(NULL, "dec-");
+    // fire up gstreamer
+    std::cout << filename << ": decoding to " << tmp_filename << std::endl;
+    std::string cmdline;
+    char *pwd = get_current_dir_name();
+    
+    cmdline.append("/usr/bin/gst-launch-0.10 filesrc location=").append(pwd).append("/").append(filename);
+    cmdline.append(" ! decodebin ! audioconvert ! audio/x-raw-int,channels=1,rate=44100 ! wavenc ! filesink location=");
+    cmdline.append(tmp_filename).append(" > /dev/null");
+    
+    //std::cout << "cmdline: " << cmdline << std::endl;
+    system(cmdline.c_str());
+    
     sfinfo = (SF_INFO *) calloc(1, sizeof(SF_INFO));
-    //MD5_Init(&md5_context);
-    if (!(sf_in = sf_open(filename.c_str(), SFM_READ, sfinfo))) {
+    if (!(sf_in = sf_open(tmp_filename, SFM_READ, sfinfo))) {
         std::cout << "Error opening input file." << std::endl;
         exit(EXIT_FAILURE);
     }
+    free(pwd);
 }
 
 SoundFile::~SoundFile()
 {
     sf_close(sf_in);
     free(sfinfo);
+    unlink(tmp_filename);
+    free(tmp_filename);
 }
 
 int SoundFile::read(float* buffer, int n)
@@ -30,14 +48,6 @@ int SoundFile::read(float* buffer, int n)
         return 0;
     }
     
-    //MD5_Update(&md5_context, buffer, n);
-
     return n;
 }
 
-/*char* get_md5()
-{
-    char* md5 = new char[MD5_DIGEST_LENGTH];
-    MD5_Final(md5, md5_context);
-    return md5;
-}*/

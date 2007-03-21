@@ -1,7 +1,3 @@
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <cmath>
 #include <string.h>
 #include <fftw3.h>
@@ -19,8 +15,9 @@ FFT::FFT(float *out)
     for (int i = 0; i < WINDOW_SIZE; i++) {
         hanning_window[i] = 0.5 - 0.5 * cos(ang * i);
     }
-    FILE * wisdom;
+    FILE* wisdom;
     if ((wisdom = fopen("/home/george/.extractor/wisdom", "r")) != NULL) {
+        // fftw leaks memory malloc'd in this call...
         fftwf_import_wisdom_from_file(wisdom);
         fclose(wisdom);
         plan = fftwf_plan_r2r_1d(WINDOW_SIZE, fft_input, out, FFTW_R2HC, FFTW_EXHAUSTIVE);
@@ -38,6 +35,8 @@ FFT::~FFT()
 {
     fftwf_free(fft_input);
     delete [] hanning_window;
+    fftwf_forget_wisdom();
+    fftwf_destroy_plan(plan);
 }
 
 void FFT::do_window(float *in)
@@ -59,3 +58,4 @@ void FFT::fix_output(float *output)
         output[i] = pow(output[i], 2) + pow(output[WINDOW_SIZE - i], 2);
     }
 }
+

@@ -1,0 +1,37 @@
+import os
+
+debug = ARGUMENTS.get('debug', 0)
+profile = ARGUMENTS.get('profile', 0)
+
+if int(debug):
+	env = Environment(CCFLAGS = '-g -O0 -DDEBUG -Wall')
+elif(profile):
+	env = Environment(CCFLAGS = '-g -O0 -DDEBUG -pg', LINKFLAGS = '-g -pg')
+else:
+	env = Environment(CCFLAGS = '-O3 -funroll-loops -fomit-frame-pointer -march=athlon-xp')
+
+if not env.GetOption('clean'):
+	conf = Configure(env)
+	if not conf.CheckLibWithHeader('popt', 'popt.h', 'C'):
+		print 'Need libpopt'
+		Exit(1)
+	if not conf.CheckLibWithHeader('sndfile', 'sndfile.h', 'C'):
+		print 'Need libsndfile'
+		Exit(1)
+	if not conf.CheckLibWithHeader('fftw3f', 'fftw3.h', 'C'):
+		print 'Need fftw3 compiled with --enable-float'
+		Exit(1)
+	env = conf.Finish()
+else:
+	Execute(Delete("gmon.out"))
+	Execute(Delete("config.log"))
+	os.system("astyle --options=astylerc *{cc,hh}")
+
+libfeature_files = Split("Song.cc Features.cc")
+extractor_files = Split("extractor.cc FFT.cc SoundFile.cc")
+generator_files = Split("generator.cc")
+
+env.Library('feature', libfeature_files)
+env.Program(extractor_files, LIBS=['feature', 'sndfile', 'fftw3f', 'popt'], LIBPATH='.')
+env.Program(generator_files, LIBS=['feature', 'popt'], LIBPATH='.')
+

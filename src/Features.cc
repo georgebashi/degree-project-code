@@ -1,9 +1,7 @@
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <cmath>
 #include <vector>
+#include <assert.h>
+#include <cfloat>
 
 #include "common.hh"
 #include "Features.hh"
@@ -19,11 +17,6 @@ FeatureSet::~FeatureSet()
 
 FeatureGroup::FeatureGroup(std::vector<FeatureSet *>* sets)
 {
-    mean = new float[NUMBER_OF_FEATURES];
-    variance = new float[NUMBER_OF_FEATURES];
-    skewness = new float[NUMBER_OF_FEATURES];
-    kurtosis = new float[NUMBER_OF_FEATURES];
-    
     for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
         float data[WINDOWS_PER_BLOCK];
         
@@ -36,33 +29,6 @@ FeatureGroup::FeatureGroup(std::vector<FeatureSet *>* sets)
         skewness[feature] = get_skewness(data, mean[feature], stdev, WINDOWS_PER_BLOCK);
         kurtosis[feature] = get_kurtosis(data, mean[feature], stdev, WINDOWS_PER_BLOCK);
     }
-}
-FeatureGroup::FeatureGroup(std::vector<FeatureGroup*>* groups)
-{
-    mean = new float[NUMBER_OF_FEATURES];
-    variance = new float[NUMBER_OF_FEATURES];
-    skewness = new float[NUMBER_OF_FEATURES];
-    kurtosis = new float[NUMBER_OF_FEATURES];
-    
-    for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-        float data[WINDOWS_PER_BLOCK];
-        
-        for (unsigned int i = 0; i < WINDOWS_PER_BLOCK; i++) {
-            data[i] = groups->at(i)->mean[feature];
-        }
-        mean[feature] = get_mean(data, WINDOWS_PER_BLOCK);
-        variance[feature] = get_variance(data, mean[feature], WINDOWS_PER_BLOCK);
-        float stdev = get_stdev(variance[feature]);
-        skewness[feature] = get_skewness(data, mean[feature], stdev, WINDOWS_PER_BLOCK);
-        kurtosis[feature] = get_kurtosis(data, mean[feature], stdev, WINDOWS_PER_BLOCK);
-    }
-}
-FeatureGroup::~FeatureGroup()
-{
-    delete[] mean;
-    delete[] variance;
-    delete[] skewness;
-    delete[] kurtosis;
 }
 
 float get_mean(float *data, int n)
@@ -121,14 +87,15 @@ FeatureSet* FeatureExtractor::process(float* signal, float* fft)
 float FeatureExtractor::zero_crossing_rate(float *signal)
 {
     unsigned int total = 0;
-    for (unsigned int i = 0; i < WINDOW_SIZE - 1; i++) {
+    for (unsigned int i = WINDOW_SIZE - 1; i--;) {
 #ifdef ZCR_SCHWARZ
-        total += (signal[i] < 0 ? 1 : 0) ^ (signal[i + 1] < 0 ? 1 : 0);
+        total += (signal[i] < 0 ? 1 : 0) ^(signal[i + 1] < 0 ? 1 : 0);
 #else
         total += ((signal[i] * signal[i + 1]) < 0);
 #endif
+        __builtin_prefetch(&signal[i - 1], 0, 1);
     }
-    return total * (1.0f / WINDOW_SIZE);
+    return total *(1.0f / WINDOW_SIZE);
 }
 
 float FeatureExtractor::first_order_autocorrelation(float *signal)
@@ -137,7 +104,7 @@ float FeatureExtractor::first_order_autocorrelation(float *signal)
     for (int i = 0; i < WINDOW_SIZE - 1; i++) {
         total += signal[i] * signal[i + 1];
     }
-    return total * (1.0f / WINDOW_SIZE);
+    return total *(1.0f / WINDOW_SIZE);
 }
 
 float FeatureExtractor::linear_regression(float *fft)
@@ -172,13 +139,14 @@ float FeatureExtractor::spectral_intensity(float *fft)
 float FeatureExtractor::spectral_smoothness(float *fft)
 {
     float ss = 0;
-    for (unsigned int i = 2; i < BINS - 1; i++) {
+    //for (unsigned int i = 2; i < BINS - 1; i++) {
+    for (unsigned int i = BINS - 1; i-- != 2;) {
         ss += (20 * logf(fft[i])) - ((
-                                        (20 * logf(fft[i - 1])) +
-                                        (20 * logf(fft[i])) +
-                                        (20 * logf(fft[i + 1]))
-                                    ) / 3);
-        __builtin_prefetch(&fft[i + 2], 0, 1);
+                                         (20 * logf(fft[i - 1])) +
+                                         (20 * logf(fft[i])) +
+                                         (20 * logf(fft[i + 1]))
+                                     ) / 3);
+        __builtin_prefetch(&fft[i - 2], 0, 1);
     }
     return fabsf(ss);
 }
@@ -202,5 +170,6 @@ float FeatureExtractor::spectral_dissymmetry(float spectral_centroid, float *fft
     }
     return cbrtf(top / bottom);
 }
+
 
 

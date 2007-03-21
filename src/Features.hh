@@ -12,28 +12,34 @@
 #define SPECTRAL_SPREAD 6
 #define SPECTRAL_DISSYMMETRY 7
 
+#define MEAN 0
+#define VARIANCE 1
+#define SKEWNESS 2
+#define KURTOSIS 3
+#define NUMBER_OF_AGGREGATE_STATS 4
+
 #define ZCR_SCHWARZ
+
+#include <vector>
 
 class FeatureSet
 {
-public:
-    float* features;
-    FeatureSet(float** features);
-    ~FeatureSet();
+    public:
+        float* features;
+        FeatureSet(float** features);
+        ~FeatureSet();
 };
 
 class FeatureGroup
 {
-public:
-    FeatureGroup(std::vector<FeatureSet *>* sets);
-    FeatureGroup(std::vector<FeatureGroup *>* sets);
-    ~FeatureGroup();
-    float* mean;
-    float* variance;
-    float* skewness;
-    float* kurtosis;
+    public:
+        FeatureGroup() {};
+        FeatureGroup(std::vector<FeatureSet *>* sets);
+        float mean[NUMBER_OF_FEATURES];
+        float variance[NUMBER_OF_FEATURES];
+        float skewness[NUMBER_OF_FEATURES];
+        float kurtosis[NUMBER_OF_FEATURES];
 };
-
 
 float get_mean(float *data, int n);
 float get_variance(float *data, float mean, int n);
@@ -43,19 +49,20 @@ float get_kurtosis(float *data, float mean, float stdev, int n);
 
 class FeatureExtractor
 {
-public:
-    FeatureSet* process(float *signal, float* fft);
-private:
-    float zero_crossing_rate(float *signal);
-    float first_order_autocorrelation(float *signal);
-    float linear_regression(float *fft);
-    float spectral_centroid(float *fft);
-    float spectral_intensity(float *fft);
-    float spectral_smoothness(float *fft);
-    float spectral_spread(float spectral_centroid, float *fft);
-    float spectral_dissymmetry(float spectral_centroid, float *fft);
+    public:
+        FeatureSet* process(float *signal, float* fft);
+    private:
+        float zero_crossing_rate(float *signal);
+        float first_order_autocorrelation(float *signal);
+        float linear_regression(float *fft);
+        float spectral_centroid(float *fft);
+        float spectral_intensity(float *fft);
+        float spectral_smoothness(float *fft);
+        float spectral_spread(float spectral_centroid, float *fft);
+        float spectral_dissymmetry(float spectral_centroid, float *fft);
 };
 
 
 
 #endif
+
