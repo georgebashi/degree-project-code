@@ -1,5 +1,5 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef COMMON_HH
+#define COMMON_HH
 
 #ifdef __GCC__
 #define LIKELY(x)   (__builtin_expect(x, 1))

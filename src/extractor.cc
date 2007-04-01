@@ -1,8 +1,5 @@
-#include <iostream>
-#include <stdlib.h>
-#include <string.h>
 #include <popt.h>
-#include <vector>
+#include <sys/stat.h>
 #include <fstream>
 
 #include "common.hh"
@@ -23,6 +20,8 @@ const struct poptOption options[] =
     
 int main(int argc, const char *argv[])
 {
+    setbuf(stdout, NULL);
+    
     // read options
     poptContext context = poptGetContext("extractor", argc, argv, options, 0);
     poptSetOtherOptionHelp(context, "[OPTION...] file.wav");
@@ -58,7 +57,22 @@ int main(int argc, const char *argv[])
     while ((file = files[i++]) != NULL) {
         // open specified file
         std::string filename(poptGetArg(context));
-        SoundFile* wav = new SoundFile(filename);
+        std::cout << filename;
+        
+        struct stat file_stat;
+        if (stat((filename + ".vec").c_str(), &file_stat) == 0) {
+            std::cout << ": skipping..." << std::endl;
+            continue;
+        }
+        
+        SoundFile* wav;
+        try {
+            wav = new SoundFile(filename);
+        } catch (std::string& error) {
+            std::cout << ", read error: " << error << std::endl;
+            continue;
+        }
+        std::cout << ", analyse";
         Song next_song(filename);
         
         memset(wav_data, 0, STEP_SIZE * sizeof(float));
@@ -97,8 +111,10 @@ int main(int argc, const char *argv[])
                 window_number++;
             }
         }
+        next_song.feature_blocks->pop_back();
+        next_song.feature_blocks->erase(next_song.feature_blocks->begin());
         next_song.setSongFeatures(new FeatureGroup(current_song_feature_sets));
-        std::cout << file << ": " << next_song.feature_blocks->size() << " blocks" << std::endl;
+        std::cout << ", done (" << next_song.feature_blocks->size() << " blocks)" << std::endl;
         
         std::ofstream ofs((next_song.filename + ".vec").c_str(), std::ios::binary);
         next_song.write(&ofs);

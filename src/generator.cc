@@ -1,18 +1,17 @@
-#include <iostream>
-#include <stdlib.h>
-#include <string.h>
-#include <popt.h>
+
 #include <vector>
-#include <fstream>
-#include <sys/types.h>
-#include <dirent.h>
-#include <cfloat>
+#include <fnmatch.h>
+#include <popt.h>
+#include <string>
 
 #include "common.hh"
 #include "Features.hh"
 #include "Song.hh"
+#include "SongSet.hh"
 #include "generator.hh"
 
+
+Song* key;
 
 int main(int argc, const char *argv[])
 {
@@ -22,6 +21,7 @@ int main(int argc, const char *argv[])
     
     // parse
     display_version = 0;
+    n_similar = 0;
     dir = ".";
     poptGetNextOpt(context);
     
@@ -38,101 +38,48 @@ int main(int argc, const char *argv[])
     
     // get file list
     const char ** key_songs = poptGetArgs(context);
-    DIR* song_dir = opendir(dir);
-    std::vector<Song *> song_vectors;
-    dirent* song_file;
-    while ((song_file = readdir(song_dir)) != NULL) {
-        std::string filename(song_file->d_name);
-        if (filename.length() < 4 || filename.compare(filename.length() - 4, 4, ".vec") != 0) { continue; }
-        song_vectors.push_back(new Song(std::string(dir), song_file->d_name));
-        std::cout << song_vectors.back()->filename << std::endl;
+    
+    SongSet song_vectors(dir);
+    song_vectors.normalise();
+    
+    if (!song_vectors.size()) {
+        std::cout << "No songs analysed yet!" << std::endl;
+        exit(0);
     }
     
-    // find normalisation vector
-    float* normalisation_vector = new float[NUMBER_OF_FEATURES * NUMBER_OF_AGGREGATE_STATS];
-    getNormalisationVector(song_vectors, normalisation_vector);
-    normalise(song_vectors, normalisation_vector);
+    std::cout << song_vectors.size() << " songs loaded" << std::endl;
     
-    /*for (int i = 0; i < NUMBER_OF_FEATURES * NUMBER_OF_AGGREGATE_STATS; i++) {
-        std::cout << normalisation_vector[i] << std::endl;
-    }*/
-    
-    for (unsigned int block = 0; block < song_vectors.at(0)->feature_blocks->size(); block++) {
-        printf("block %d:\n", block);
-        for (int i = 0; i < NUMBER_OF_FEATURES; i++) {
-            printf("  feature %d: %f,%f,%f,%f\n",
-                   i,
-                   song_vectors.at(0)->feature_blocks->at(block)->mean[i],
-                   song_vectors.at(0)->feature_blocks->at(block)->variance[i],
-                   song_vectors.at(0)->feature_blocks->at(block)->skewness[i],
-                   song_vectors.at(0)->feature_blocks->at(block)->kurtosis[i]
-                  );
+    if (n_similar) {
+        if (key_songs[0] == NULL) {
+            std::cout << "Please specify a key song with -s" << std::endl;
+            exit(0);
+        }
+        for (unsigned int i = 0; i < song_vectors.size(); i++) {
+            if (fnmatch(
+                        (std::string("*") + std::string(key_songs[0]) + std::string("*")).c_str(),
+                        song_vectors.at(i)->filename.c_str(),
+                        0)
+                    == 0) {
+                key = song_vectors.at(i);
+                std::cout << key->filename << std::endl;
+                break;
+            }
+        }
+        
+        std::sort(song_vectors.begin(), song_vectors.end(), song_cmp);
+        
+        for (int i = 0; i < n_similar; i++) {
+            std::cout << song_vectors.at(i)->filename << " (" << key->compare(song_vectors.at(i)) << ")" << std::endl;
         }
     }
+    
     poptFreeContext(context);
     return EXIT_SUCCESS;
 }
 
-void getNormalisationVector(std::vector<Song *> songs, float* vector)
+bool song_cmp(Song* s1, Song* s2)
 {
-    // initialise with first values from first song
-    for (int i = NUMBER_OF_FEATURES * NUMBER_OF_AGGREGATE_STATS; i--;) {
-        vector[i + (MEAN * NUMBER_OF_FEATURES)] = songs.at(0)->feature_blocks->at(0)->mean[i];
-        vector[i + (VARIANCE * NUMBER_OF_FEATURES)] = songs.at(0)->feature_blocks->at(0)->variance[i];
-        vector[i + (SKEWNESS * NUMBER_OF_FEATURES)] = songs.at(0)->feature_blocks->at(0)->skewness[i];
-        vector[i + (KURTOSIS * NUMBER_OF_FEATURES)] = songs.at(0)->feature_blocks->at(0)->kurtosis[i];
-    }
-    
-    for (unsigned int i = 0; i < songs.size(); i++) {
-        Song* song = songs.at(i);
-        
-        for (unsigned int block = 0; block < song->feature_blocks->size(); block++) {
-            for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-            
-                if (song->feature_blocks->at(block)->mean[feature] > vector[feature * MEAN]) {
-                    std::cout << "mean increased" << std::endl;
-                    vector[feature + (MEAN * NUMBER_OF_FEATURES)] = song->feature_blocks->at(block)->mean[feature];
-                }
-                
-                if (song->feature_blocks->at(block)->variance[feature] > vector[feature * VARIANCE]) {
-                    std::cout << "variance increased" << std::endl;
-                    vector[feature + (VARIANCE * NUMBER_OF_FEATURES)] = song->feature_blocks->at(block)->variance[feature];
-                }
-                
-                if (song->feature_blocks->at(block)->skewness[feature] > vector[feature * SKEWNESS]) {
-                    std::cout << "skewness increased" << std::endl;
-                    vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)] = song->feature_blocks->at(block)->skewness[feature];
-                }
-                
-                if (song->feature_blocks->at(block)->kurtosis[feature] > vector[feature * KURTOSIS]) {
-                    std::cout << "kurtosis increased" << std::endl;
-                    vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)] = song->feature_blocks->at(block)->kurtosis[feature];
-                }
-            }
-        }
-    }
-}
-
-void normalise(std::vector<Song *> songs, float* vector)
-{
-    for (unsigned int i = 0; i < songs.size(); i++) {
-        Song* song = songs.at(i);
-        
-        for (unsigned int block = 0; block < song->feature_blocks->size(); block++) {
-            for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-                song->feature_blocks->at(block)->mean[feature] /= vector[feature + (MEAN * NUMBER_OF_FEATURES)];
-                song->feature_blocks->at(block)->variance[feature] /= vector[feature + (VARIANCE * NUMBER_OF_FEATURES)];
-                song->feature_blocks->at(block)->skewness[feature] /= vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)];
-                song->feature_blocks->at(block)->kurtosis[feature] /= vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)];
-            }
-        }
-        
-        for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-            song->song_features->mean[feature] /= vector[feature + (MEAN * NUMBER_OF_FEATURES)];
-            song->song_features->variance[feature] /= vector[feature + (VARIANCE * NUMBER_OF_FEATURES)];
-            song->song_features->skewness[feature] /= vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)];
-            song->song_features->kurtosis[feature] /= vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)];
-        }
-    }
+    //std::cout << key->compare(s1) << "\tvs.\t" << key->compare(s2);
+    return key->compare(s1) < key->compare(s2);
 }
 

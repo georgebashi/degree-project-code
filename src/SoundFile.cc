@@ -1,10 +1,8 @@
 
-#include <string.h>
+#include <string>
 #include <sndfile.h>
 #include <iostream>
 #include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #include "common.hh"
 #include "SoundFile.hh"
@@ -13,25 +11,25 @@
 SoundFile::SoundFile(std::string filename)
 {
     // find name for temp file
-    tmp_filename = tempnam(NULL, "dec-");
+    tmp_filename = tempnam("/decode", "dec-");
     // fire up gstreamer
-    std::cout << filename << ": decoding to " << tmp_filename << std::endl;
+    std::cout << ": decode";
     std::string cmdline;
     char *pwd = get_current_dir_name();
     
-    cmdline.append("/usr/bin/gst-launch-0.10 filesrc location=").append(pwd).append("/").append(filename);
-    cmdline.append(" ! decodebin ! audioconvert ! audio/x-raw-int,channels=1,rate=44100 ! wavenc ! filesink location=");
-    cmdline.append(tmp_filename).append(" > /dev/null");
+    cmdline.append("/usr/bin/gst-launch-0.10 filesrc location=\"").append(pwd).append("/").append(filename);
+    cmdline.append("\" ! decodebin ! audioconvert ! audio/x-raw-int,channels=1,rate=44100 ! wavenc ! filesink location=");
+    cmdline.append(tmp_filename).append(" &> /dev/null");
+    
+    free(pwd);
     
     //std::cout << "cmdline: " << cmdline << std::endl;
     system(cmdline.c_str());
     
     sfinfo = (SF_INFO *) calloc(1, sizeof(SF_INFO));
     if (!(sf_in = sf_open(tmp_filename, SFM_READ, sfinfo))) {
-        std::cout << "Error opening input file." << std::endl;
-        exit(EXIT_FAILURE);
+        throw std::string(sf_strerror(sf_in));
     }
-    free(pwd);
 }
 
 SoundFile::~SoundFile()
@@ -44,7 +42,7 @@ SoundFile::~SoundFile()
 
 int SoundFile::read(float* buffer, int n)
 {
-    if (!sf_readf_float(sf_in, buffer, n)) {
+    if (sf_readf_float(sf_in, buffer, n) != n) {
         return 0;
     }
     

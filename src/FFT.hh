@@ -1,5 +1,5 @@
-#ifndef FFT_H
-#define FFT_H
+#ifndef FFT_HH
+#define FFT_HH
 
 #include <fftw3.h>
 

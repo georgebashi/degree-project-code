@@ -20,6 +20,9 @@
 
 #define ZCR_SCHWARZ
 
+#define SONG_FEATURE_WEIGHT 1
+#define BLOCK_FEATURE_WEIGHT 1
+
 #include <vector>
 
 class FeatureSet
@@ -46,6 +49,7 @@ float get_variance(float *data, float mean, int n);
 float get_stdev(float variance);
 float get_skewness(float *data, float mean, float stdev, int n);
 float get_kurtosis(float *data, float mean, float stdev, int n);
+inline float check_nan(float n);
 
 class FeatureExtractor
 {
@@ -65,4 +69,3 @@ class FeatureExtractor
 
 
 #endif
-

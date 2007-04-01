@@ -1,5 +1,5 @@
 #include <cmath>
-#include <string.h>
+#include <string>
 #include <fftw3.h>
 
 #include "common.hh"

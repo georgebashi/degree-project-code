@@ -1,15 +1,12 @@
-#include <string.h>
+
+#include <vector>
+#include <string>
 #include <fstream>
-#include <sys/types.h>
-#include <dirent.h>
-#include <math.h>
-#include <assert.h>
-#include <cfloat>
+#include <cmath>
 
 #include "common.hh"
-#include "Features.hh"
-
 #include "Song.hh"
+
 
 Song::Song(std::string filename)
 {
@@ -29,22 +26,15 @@ Song::~Song()
 
 Song::Song(std::string path, std::string filename)
 {
+    this->filename = filename;
+    
     std::string filepath;
     if (path.compare(path.length() - 1, 1, "/") != 0) {
         filepath = path + "/" + filename;
     } else {
         filepath = path + filename;
     }
-    
     std::ifstream input(filepath.c_str(), std::ios::binary);
-    
-    // read the file name
-    int filename_length;
-    input.read((char *) &filename_length, sizeof(int));
-    
-    char filename_cstr[filename_length];
-    input.read(filename_cstr, sizeof(char) * filename_length);
-    this->filename = std::string(filename_cstr);
     
     // read the song features
     this->song_features = readFeatureGroup(&input);
@@ -82,10 +72,6 @@ void Song::setSongFeatures(FeatureGroup* song_features)
 
 void Song::write(std::ofstream* output)
 {
-    int filename_length = filename.length() + 1;
-    output->write((char *)&filename_length, sizeof(int));
-    output->write(filename.c_str(), filename.length() + 1);
-    
     writeFeatureGroup(output, song_features);
     
     int num_blocks = feature_blocks->size();
@@ -105,27 +91,70 @@ void writeFeatureGroup(std::ofstream* output, FeatureGroup* feature_group)
     }
 }
 
+bool float_bad(float f)
+{
+    return !std::isnormal(f);
+}
+
+bool Song::has_nan()
+{
+    /*for (int i = 0; i < NUMBER_OF_FEATURES; i++) {
+        if (float_bad(song_features->mean[i]) || float_bad(song_features->variance[i]) || float_bad(song_features->skewness[i]) || float_bad(song_features->kurtosis[i])) {
+            return 1;
+        }
+    }*/
+    
+    for (unsigned int i = 0; i < feature_blocks->size(); i++) {
+        for (int j = 0; j < NUMBER_OF_FEATURES; j++) {
+            if (float_bad(feature_blocks->at(i)->mean[j]) || float_bad(feature_blocks->at(i)->variance[j]) || float_bad(feature_blocks->at(i)->skewness[j]) || float_bad(feature_blocks->at(i)->kurtosis[j])) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+
 
 float Song::compare(Song* other)
 {
-    // SIMILARITY MEASURE!
-    float total_diff = compareFeatureGroup(song_features, other->song_features);
+    float weights[/*NUMBER_OF_FEATURES * NUMBER_OF_AGGREGATE_STATS*/ 32] =
+        {
+            1, 0, 0, 0,
+            1, 0, 0, 0,
+            1, 0, 0, 0,
+            1, 0, 0, 0,
+            1, 0, 0, 0,
+            1, 0, 0, 0,
+            1, 0, 0, 0,
+            1, 0, 0, 0
+        };
+        
+    float song_diff = compareFeatureGroup(song_features, other->song_features, weights);
+    //CHECK(song_diff);
+    float block_diff = 0;
     int smallest_feature_block_count = feature_blocks->size() < other->feature_blocks->size() ? feature_blocks->size() : other->feature_blocks->size();
+    
     for (int i = 0; i < smallest_feature_block_count; i++) {
-        total_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(i));
+        block_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(i), weights);
+        CHECK(block_diff);
     }
-    return total_diff;
+    CHECK(/*(song_diff * SONG_FEATURE_WEIGHT) + */((block_diff / smallest_feature_block_count) * BLOCK_FEATURE_WEIGHT));
+    return /*(song_diff * SONG_FEATURE_WEIGHT) +*/ ((block_diff / smallest_feature_block_count) * BLOCK_FEATURE_WEIGHT);
 }
 
-float compareFeatureGroup(FeatureGroup* a, FeatureGroup* b)
+float compareFeatureGroup(FeatureGroup* a, FeatureGroup* b, float* weights)
 {
     float mean_diff = 0, variance_diff = 0, skewness_diff = 0, kurtosis_diff = 0;
     for (int i = NUMBER_OF_FEATURES; i--;) {
-        mean_diff += fabsf(a->mean[i]) - fabsf(b->mean[i]);
-        variance_diff += fabsf(a->variance[i]) - fabsf(b->variance[i]);
-        skewness_diff += fabsf(a->skewness[i]) - fabsf(b->skewness[i]);
-        kurtosis_diff += fabsf(a->kurtosis[i]) - fabsf(b->kurtosis[i]);
+        mean_diff += fabsf(fabsf(a->mean[i]) - fabsf(b->mean[i])) * WEIGHT(i, MEAN);
+        CHECK(mean_diff);
+        variance_diff += fabsf(fabsf(a->variance[i]) - fabsf(b->variance[i])) * WEIGHT(i, VARIANCE);
+        CHECK(variance_diff);
+        skewness_diff += fabsf(fabsf(a->skewness[i]) - fabsf(b->skewness[i])) * WEIGHT(i, SKEWNESS);
+        CHECK(skewness_diff);
+        kurtosis_diff += fabsf(fabsf(a->kurtosis[i]) - fabsf(b->kurtosis[i])) * WEIGHT(i, KURTOSIS);
+        CHECK(kurtosis_diff);
     }
     return mean_diff + variance_diff + skewness_diff + kurtosis_diff;
 }
-

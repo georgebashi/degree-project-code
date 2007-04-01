@@ -1,7 +1,5 @@
 #include <cmath>
 #include <vector>
-#include <assert.h>
-#include <cfloat>
 
 #include "common.hh"
 #include "Features.hh"
@@ -72,16 +70,20 @@ FeatureSet* FeatureExtractor::process(float* signal, float* fft)
 {
     float* features = new float[NUMBER_OF_FEATURES];
     
-    features[ZERO_CROSSING_RATE] = zero_crossing_rate(signal);
-    features[FIRST_ORDER_AUTOCORRELATION] = first_order_autocorrelation(signal);
-    features[LINEAR_REGRESSION] = linear_regression(fft);
-    features[SPECTRAL_CENTROID] = spectral_centroid(fft);
-    features[SPECTRAL_INTENSITY] = spectral_intensity(fft);
-    features[SPECTRAL_SMOOTHNESS] = spectral_smoothness(fft);
-    features[SPECTRAL_SPREAD] = spectral_spread(features[SPECTRAL_CENTROID], fft);
-    features[SPECTRAL_DISSYMMETRY] = spectral_dissymmetry(features[SPECTRAL_CENTROID], fft);
+    features[ZERO_CROSSING_RATE] = check_nan(zero_crossing_rate(signal));
+    features[FIRST_ORDER_AUTOCORRELATION] = check_nan(first_order_autocorrelation(signal));
+    features[LINEAR_REGRESSION] = check_nan(linear_regression(fft));
+    features[SPECTRAL_CENTROID] = check_nan(spectral_centroid(fft));
+    features[SPECTRAL_INTENSITY] = check_nan(spectral_intensity(fft));
+    features[SPECTRAL_SMOOTHNESS] = check_nan(spectral_smoothness(fft));
+    features[SPECTRAL_SPREAD] = check_nan(spectral_spread(features[SPECTRAL_CENTROID], fft));
+    features[SPECTRAL_DISSYMMETRY] = check_nan(spectral_dissymmetry(features[SPECTRAL_CENTROID], fft));
     
     return new FeatureSet(&features);
+}
+inline float check_nan(float n)
+{
+    return (std::isnormal(n) ? n : 0);
 }
 
 float FeatureExtractor::zero_crossing_rate(float *signal)
@@ -109,13 +111,25 @@ float FeatureExtractor::first_order_autocorrelation(float *signal)
 
 float FeatureExtractor::linear_regression(float *fft)
 {
-    float sx = 5625088.0f, sxx = 82480665344.0f, sy = 0, syy = 0, sxy = 0;
-    for (int i = 1; i < BINS; i++) {
-        sy += fft[i];
-        syy += pow(fft[i], 2);
-        sxy += i * 43 * fft[i];
+    float n = BINS - 1; // number of data points
+    /*
+     sum up
+      x * y
+      x
+      y
+      pow(x, 2)
+    */
+    float Sxy = 0, Sy = 0;
+    unsigned int freq = 0, Sx = 5625088, Sxx = 876286720;
+    for (unsigned int i = 1; i < BINS; i++) {
+        freq = i * 43;
+        // Sx += freq;
+        // Sxx += freq * freq;
+        Sy += fft[i];
+        Sxy += freq * fft[i];
     }
-    return ((BINS * sxy) - (sx * sy)) / ((BINS * sxx) - pow(sx, 2));
+    //printf("Sx: %i, Sxx: %i\n", Sx, Sxx);
+    return ((n * Sxy) - (Sx * Sy)) / ((n * Sxx) - pow(Sx, 2)) ;
 }
 
 float FeatureExtractor::spectral_centroid(float *fft)

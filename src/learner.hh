@@ -1,15 +1,16 @@
-#ifndef GENERATOR_H
-#define GENERATOR_H
+#ifndef LEARNER_HH
+#define LEARNER_HH
 
 int display_version;
 char* dir = NULL;
-int n_similar;
+char* results_file = NULL;
+
 
 const struct poptOption options[] =
     {
         {"version", 'V', POPT_ARG_NONE, &display_version, 0, "Display version and compile flags", NULL},
         {"dir", 'd', POPT_ARG_STRING, &dir, 0, "Music folder", NULL},
-        {"similar", 's', POPT_ARG_INT, &n_similar, 0, "Return n most similar tracks", NULL},
+        {"results-file", 'r', POPT_ARG_STRING, &results_file, 0, "Results file (if different from \"results.out\")", NULL},
         POPT_AUTOHELP
         POPT_TABLEEND
     };

@@ -5,10 +5,11 @@ profile = ARGUMENTS.get('profile', 0)
 
 if int(debug):
 	env = Environment(CCFLAGS = '-g -O0 -DDEBUG -Wall')
-elif(profile):
+elif(int(profile)):
 	env = Environment(CCFLAGS = '-g -O0 -DDEBUG -pg', LINKFLAGS = '-g -pg')
 else:
-	env = Environment(CCFLAGS = '-O3 -funroll-loops -fomit-frame-pointer -march=athlon-xp')
+#	env = Environment(CCFLAGS = '-O3 -funroll-loops -fomit-frame-pointer -march=athlon-xp')
+	env = Environment(CCFLAGS = '-O2 -funroll-loops -fomit-frame-pointer -march=athlon-xp')
 
 if not env.GetOption('clean'):
 	conf = Configure(env)
@@ -26,12 +27,16 @@ else:
 	Execute(Delete("gmon.out"))
 	Execute(Delete("config.log"))
 	os.system("astyle --options=astylerc *{cc,hh}")
+	os.system("../../report/appendicies/code/highlight.sh")
 
-libfeature_files = Split("Song.cc Features.cc")
-extractor_files = Split("extractor.cc FFT.cc SoundFile.cc")
+libfeature_files = Split("SongSet.cc Song.cc Features.cc FFT.cc SoundFile.cc")
+extractor_files = Split("extractor.cc")
 generator_files = Split("generator.cc")
+viewer_files = Split("viewer.cc")
+learner_files = Split("learner.cc")
 
 env.Library('feature', libfeature_files)
 env.Program(extractor_files, LIBS=['feature', 'sndfile', 'fftw3f', 'popt'], LIBPATH='.')
 env.Program(generator_files, LIBS=['feature', 'popt'], LIBPATH='.')
-
+env.Program(viewer_files, LIBS=['feature', 'popt'], LIBPATH='.')
+env.Program(learner_files, LIBS=['feature', 'popt'])

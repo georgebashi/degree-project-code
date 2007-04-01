@@ -1,6 +1,7 @@
 #ifndef SOUNDFILE_H
 #define SOUNDFILE_H
 
+#include <string>
 #include <sndfile.h>
 
 class SoundFile
