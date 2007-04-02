@@ -14,21 +14,33 @@ Find.find("../test/") { |file|
 
 puts "Loaded #{songs.size} songs\n"
 
-def save(key, similar, not_similar)
+def play(file, num_beeps = 0)
+	num_beeps.times do
+		`beep -f 300 -r 1 -d 100 -l 400 &>/dev/null`
+		sleep 0.2
+	end
+	`mplayer -ss 00:01:00 -endpos 00:00:5 "#{file}" &>/dev/null`
+	`mplayer -ss 00:02:00 -endpos 00:00:5 "#{file}" &>/dev/null`
+	sleep 0.2
+end
+
+def info(file)
+	`mplayer -identify -endpos 0:00:00 "#{file}" | grep ID_CLIP_INFO_VALUE | cut -c 21- | xargs echo 1>&2`
+end
+
+def save(similar_a, similar_b, not_similar)
 	output = File.new("results.txt", "a")
-	output.puts "#{key} * #{similar} * #{not_similar}"
+	output.puts "#{similar_a} * #{similar_b} * #{not_similar}"
 	output.close
 end
 
 while true
 	puts "\n-------------------------------------------------------------\n"
-	key = songs[rand(songs.size)].chop.chop.chop.chop
 	a = songs[rand(songs.size)].chop.chop.chop.chop
 	b = songs[rand(songs.size)].chop.chop.chop.chop
+	c = songs[rand(songs.size)].chop.chop.chop.chop
 
-	puts "Listen to this song:"
-	`mplayer -ss 00:01:00 -endpos 00:00:15 "#{key}"`
-	puts "Now choose which of the following two songs is most similar to the first:"
+	puts "Listen to these three extracts, and choose which two are the most similar:"
 	
 	done = false
 	played = false
@@ -36,40 +48,46 @@ while true
 	
 	until done
 		print "Song A"; $stdout.flush
+		play a, 1 unless played
 		
-		unless played
-			sleep 0.2
-			`beep -f 300 -r 1 -d 100 -l 400`
-			sleep 0.2
-			`mplayer -ss 00:01:00 -endpos 00:00:5 "#{a}"`
-		end
+		print ", Song B"; $stdout.flush
+		play b, 2 unless played
 		
-		print " or Song B"; $stdout.flush
+		print " or Song C"; $stdout.flush
+		play c, 3 unless played
 
-		unless played
-			sleep 0.2
-			`beep -f 300 -r 2 -d 100 -l 400`
-			sleep 0.2
-			`mplayer -ss 00:01:00 -endpos 00:00:5 "#{b}"`
-		end
-
-		puts "? (enter L followed by K, A or B to hear the excerpts again, S to skip or Q to quit)"
+		puts "? (enter ? for help)"
 		played = true
 		
 		response = gets.chomp.upcase
 		case response
-			when "A"
-				save key, a, b
+			when "?"
+				puts "[A,B,C][A,B,C] - Answer"
+				puts "L[A,B,C] - Listen to clip again"
+				puts "I[A,B,C] - Get track info"
+				puts "S - Skip"
+				puts "Q - Quit"
+			when "AB", "BA"
+				save a, b, c
 				done = true
-			when "B"
-				save key, b, a
+			when "BC", "CB"
+				save b, c, a
 				done = true
-			when "LK", "L K"
-				`mplayer -ss 00:01:00 -endpos 00:00:3 "#{key}" 1>&2`
-			when "LA", "L A"
-				`mplayer -ss 00:01:00 -endpos 00:00:3 "#{a}" 1>&2`
-			when "LB", "L B"
-				`mplayer -ss 00:01:00 -endpos 00:00:3 "#{b}" 1>&2`
+			when "AC", "CA"
+				save a, c, b
+				done = true
+			when "LA"
+				play a
+			when "LB"
+				play b
+			when "LC"
+				play c
+			when "IA"
+				info a
+			when "IB"
+				info b
+			when "IC"
+				info c
 			when "S"
 				done = true
 				next

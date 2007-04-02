@@ -9,6 +9,8 @@ class SongSet : public std::vector<Song*>
         SongSet(std::string dir);
         std::string dir;
         void normalise();
+        Song* get_by_filename(std::string filename);
+        
     private:
         SongSet() {};
 };

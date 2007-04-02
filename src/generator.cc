@@ -63,11 +63,11 @@ int main(int argc, const char *argv[])
         }
         
         comparison_function = ORDERED;
-        if (strcasecmp(comp_str, "ordered-area")) {
+        if (strcasecmp(comp_str, "ordered-area") == 0) {
             comparison_function = ORDERED_AREA;
-        } else if (strcasecmp(comp_str, "sorted")) {
+        } else if (strcasecmp(comp_str, "sorted") == 0) {
             comparison_function = SORTED;
-        } else if (strcasecmp(comp_str, "total")) {
+        } else if (strcasecmp(comp_str, "total") == 0) {
             comparison_function = TOTAL;
         }
         
@@ -84,14 +84,16 @@ int main(int argc, const char *argv[])
         }
         
         float comparison_weights[32] = {
-                                           1, 0, 0, 0,
-                                           1, 0, 0, 0,
-                                           1, 0, 0, 0,
-                                           1, 0, 0, 0,
-                                           1, 0, 0, 0,
-                                           1, 0, 0, 0,
-                                           1, 0, 0, 0,
-                                           1, 0, 0, 0
+                                           0.910363, 0.980491, 0.997728, 0.988941, 0.976363, 0.976237, 0.999997, 0.998957, 0.999903, 1, 0.935608, 0.994193, 0.988748, 0.994201, 0.999557, 0.98892, 0.96306, 0.98984, 0.976346, 0.997441, 0.962884, 0.949067, 0.998862, 0.999293, 0.924049, 0.983407, 0.981964, 0.995814, 0.899965, 0.976676, 0.998863, 0.997049
+                                           /*
+                                                                                      1, 0, 0, 0,
+                                                                                      1, 0, 0, 0,
+                                                                                      1, 0, 0, 0,
+                                                                                      1, 0, 0, 0,
+                                                                                      1, 0, 0, 0,
+                                                                                      1, 0, 0, 0,
+                                                                                      1, 0, 0, 0,
+                                                                                      1, 0, 0, 0*/
                                        };
         weights = comparison_weights;
         

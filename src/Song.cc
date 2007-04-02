@@ -137,7 +137,7 @@ float* comparison_weights;
 
 float Song::compare(Song* other, float* weights, int comparison_function)
 {
-
+    //std::cout << comparison_function;
     float song_diff, block_diff;
     block_diff = 0;
     song_diff = compareFeatureGroup(song_features, other->song_features, weights);
@@ -182,7 +182,7 @@ float Song::compare(Song* other, float* weights, int comparison_function)
             break;
         }
         case TOTAL: {
-            unsigned int i, j;
+            unsigned int i = 0, j = 0;
             for (i = 0; i < feature_blocks->size(); i++) {
                 for (j = 0; j < other->feature_blocks->size(); j++) {
                     block_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(j), weights);
@@ -197,7 +197,7 @@ float Song::compare(Song* other, float* weights, int comparison_function)
 
 bool fg_cmp(FeatureGroup* fg1, FeatureGroup* fg2)
 {
-    float first_total, second_total;
+    float first_total = 0, second_total = 0;
     float* weights = comparison_weights;
     for (int i = 0; i < NUMBER_OF_FEATURES; i++) {
         first_total += (fg1->mean[i] * WEIGHT(i, MEAN)) +
