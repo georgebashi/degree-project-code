@@ -1,3 +1,5 @@
+// $Id$
+
 #include <popt.h>
 #include <sys/stat.h>
 #include <fstream>
@@ -12,7 +14,7 @@ int display_version;
 
 const struct poptOption options[] =
     {
-        {"version", 'V', POPT_ARG_NONE, &display_version, 0, "Display version and compile flags", NULL
+        {"version", 'V', POPT_ARG_NONE, &display_version, 0, "Display version", NULL
         },
         POPT_AUTOHELP
         POPT_TABLEEND
@@ -24,7 +26,7 @@ int main(int argc, const char *argv[])
     
     // read options
     poptContext context = poptGetContext("extractor", argc, argv, options, 0);
-    poptSetOtherOptionHelp(context, "[OPTION...] file.wav");
+    poptSetOtherOptionHelp(context, "[OPTION...] file.mp3 [file.mp3...]");
     
     // parse
     display_version = 0;
@@ -37,7 +39,7 @@ int main(int argc, const char *argv[])
     }
     
     if (display_version) {
-        std::cout << "Feature Extractor: svn-$Revision$" << std::endl;
+        std::cout << "Feature Extractor: $Revision$" << std::endl;
         exit(EXIT_SUCCESS);
     }
     // get file list

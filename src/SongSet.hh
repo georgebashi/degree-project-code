@@ -1,3 +1,5 @@
+// $Id$
+
 #ifndef SONG_SET_HH
 #define SONG_SET_HH
 

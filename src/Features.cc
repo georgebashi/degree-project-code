@@ -1,3 +1,5 @@
+// $Id$
+
 #include <cmath>
 #include <vector>
 
@@ -16,16 +18,18 @@ FeatureSet::~FeatureSet()
 FeatureGroup::FeatureGroup(std::vector<FeatureSet *>* sets)
 {
     for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-        float data[WINDOWS_PER_BLOCK];
+        unsigned int data_points = sets->size();
         
-        for (unsigned int i = 0; i < WINDOWS_PER_BLOCK; i++) {
+        float data[data_points];
+        
+        for (unsigned int i = 0; i < data_points; i++) {
             data[i] = sets->at(i)->features[feature];
         }
-        mean[feature] = get_mean(data, WINDOWS_PER_BLOCK);
-        variance[feature] = get_variance(data, mean[feature], WINDOWS_PER_BLOCK);
+        mean[feature] = get_mean(data, data_points);
+        variance[feature] = get_variance(data, mean[feature], data_points);
         float stdev = get_stdev(variance[feature]);
-        skewness[feature] = get_skewness(data, mean[feature], stdev, WINDOWS_PER_BLOCK);
-        kurtosis[feature] = get_kurtosis(data, mean[feature], stdev, WINDOWS_PER_BLOCK);
+        skewness[feature] = get_skewness(data, mean[feature], stdev, data_points);
+        kurtosis[feature] = get_kurtosis(data, mean[feature], stdev, data_points);
     }
 }
 

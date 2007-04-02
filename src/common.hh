@@ -1,3 +1,5 @@
+// $Id$
+
 #ifndef COMMON_HH
 #define COMMON_HH
 

@@ -1,3 +1,5 @@
+# $Id$
+
 import os
 
 debug = ARGUMENTS.get('debug', 0)
@@ -39,4 +41,4 @@ env.Library('feature', libfeature_files)
 env.Program(extractor_files, LIBS=['feature', 'sndfile', 'fftw3f', 'popt'], LIBPATH='.')
 env.Program(generator_files, LIBS=['feature', 'popt'], LIBPATH='.')
 env.Program(viewer_files, LIBS=['feature', 'popt'], LIBPATH='.')
-env.Program(learner_files, LIBS=['feature', 'popt'])
+env.Program(learner_files, LIBS=['feature', 'popt'], LIBPATH='.')

@@ -1,3 +1,5 @@
+// $Id$
+
 #ifndef SONG_HH
 #define SONG_HH
 
@@ -15,6 +17,11 @@
 #endif
 
 #define WEIGHT(F,S) (weights[(((F) * (NUMBER_OF_AGGREGATE_STATS)) + (S))])
+
+#define ORDERED 0
+#define ORDERED_AREA 1
+#define SORTED 2
+#define TOTAL 3
 
 class Song
 {
@@ -34,7 +41,7 @@ class Song
         void setSongFeatures(FeatureGroup* song_features);
         void write(std::ofstream* output);
         float compare(Song* other);
-        
+        float compare(Song* other, float* weights, int comparison_function);
         std::string filename;
         FeatureGroup* song_features;
         std::vector<FeatureGroup *>* feature_blocks;
@@ -43,6 +50,7 @@ class Song
         Song() {};
 };
 
+bool fg_cmp(FeatureGroup* fg1, FeatureGroup* fg2);
 FeatureGroup* readFeatureGroup(std::ifstream* input);
 void writeFeatureGroup(std::ofstream* output, FeatureGroup* feature_group);
 float compareFeatureGroup(FeatureGroup* a, FeatureGroup* b, float* weights);

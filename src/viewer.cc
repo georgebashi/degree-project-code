@@ -1,7 +1,8 @@
+// $Id$
+
 #include <popt.h>
 #include <math.h>
 #include <vector>
-
 
 #include "Features.hh"
 #include "Song.hh"
@@ -24,7 +25,7 @@ void print_feature_group(FeatureGroup* group);
 int main(int argc, const char *argv[])
 {
     poptContext context = poptGetContext("viewer", argc, argv, options, 0);
-    poptSetOtherOptionHelp(context, "[OPTION...] file.wav");
+    poptSetOtherOptionHelp(context, "[OPTION...] file.vec");
     display_version = 0;
     display_song_block = 0;
     display_blocks = 0;

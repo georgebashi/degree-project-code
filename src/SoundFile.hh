@@ -1,3 +1,5 @@
+// $Id$
+
 #ifndef SOUNDFILE_H
 #define SOUNDFILE_H
 

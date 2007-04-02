@@ -1,5 +1,6 @@
-#include <string>
+// $Id$
 
+#include <string>
 #include <vector>
 #include <ftw.h>
 
@@ -32,7 +33,7 @@ int read_song_files(const char *fpath, const struct stat *sb, int typeflag)
     } else
     {
         //std::cout << "!";
-        std::cout << "Skipped: " << next->filename << " (" << next->feature_blocks->size() << " blocks)" << std::endl;
+        //std::cout << "Skipped: " << next->filename << " (" << next->feature_blocks->size() << " blocks)" << std::endl;
     }
     
     return 0;
