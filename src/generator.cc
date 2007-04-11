@@ -58,16 +58,16 @@ int main(int argc, const char *argv[])
         std::cout << song_vectors.size() << " songs loaded" << std::endl;
     }
     
-    float comparison_weights[32] = { 
-		1, 1, 1, 1,
-		1, 1, 1, 1,
-		1, 1, 1, 1,
-		1, 1, 1, 1,
-		1, 1, 1, 1,
-		1, 1, 1, 1,
-		1, 1, 1, 1,
-		1, 1, 1, 1
-     };
+    float comparison_weights[32] = {
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1,
+                                       1, 1, 1, 1
+                                   };
     weights = comparison_weights;
     
     if (n_similar) {

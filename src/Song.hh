@@ -11,7 +11,7 @@
 #include "Song.hh"
 
 #ifdef DEBUG
-#define CHECK(x) (assert(fpclassify(x) == FP_NORMAL))
+#define CHECK(x) assert(std::fpclassify(x) == FP_NORMAL);
 #else
 #define CHECK(x)
 #endif
