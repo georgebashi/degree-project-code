@@ -51,9 +51,10 @@ int main(int argc, const char *argv[])
     float *fft_output = (float *) fftwf_malloc(sizeof(float) * WINDOW_SIZE);
     
     
-    
+    // set up FFT
     FFT* fft = new FFT(fft_output);
     
+    // process each file specified
     unsigned int i = 0;
     const char* file;
     while ((file = files[i++]) != NULL) {

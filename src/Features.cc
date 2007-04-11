@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "common.hh"
+#include "Song.hh"
 #include "Features.hh"
 
 FeatureSet::FeatureSet(float** features)
@@ -31,6 +32,32 @@ FeatureGroup::FeatureGroup(std::vector<FeatureSet *>* sets)
         skewness[feature] = get_skewness(data, mean[feature], stdev, data_points);
         kurtosis[feature] = get_kurtosis(data, mean[feature], stdev, data_points);
     }
+}
+
+FeatureGroup::FeatureGroup(FeatureGroup* fg1, FeatureGroup* fg2, float dist)
+{
+    for (int i = 0; i < NUMBER_OF_FEATURES; i++) {
+        this->mean[i] = fg1->mean[i] + (dist * (fg2->mean[i] - fg1->mean[i]));
+        this->variance[i] = fg1->variance[i] + (dist * (fg2->variance[i] - fg1->variance[i]));
+        this->skewness[i] = fg1->skewness[i] + (dist * (fg2->skewness[i] - fg1->skewness[i]));
+        this->kurtosis[i] = fg1->kurtosis[i] + (dist * (fg2->kurtosis[i] - fg1->kurtosis[i]));
+    }
+}
+
+float FeatureGroup::compare(FeatureGroup* other, float* weights)
+{
+    float mean_diff = 0, variance_diff = 0, skewness_diff = 0, kurtosis_diff = 0;
+    for (int i = NUMBER_OF_FEATURES; i--;) {
+        mean_diff += fabsf(fabsf(mean[i]) - fabsf(other->mean[i])) * WEIGHT(i, MEAN);
+        CHECK(mean_diff)
+        variance_diff += fabsf(fabsf(variance[i]) - fabsf(other->variance[i])) * WEIGHT(i, VARIANCE);
+        CHECK(variance_diff)
+        skewness_diff += fabsf(fabsf(skewness[i]) - fabsf(other->skewness[i])) * WEIGHT(i, SKEWNESS);
+        CHECK(skewness_diff)
+        kurtosis_diff += fabsf(fabsf(kurtosis[i]) - fabsf(other->kurtosis[i])) * WEIGHT(i, KURTOSIS);
+        CHECK(kurtosis_diff)
+    }
+    return mean_diff + variance_diff + skewness_diff + kurtosis_diff;
 }
 
 float get_mean(float *data, int n)
@@ -143,7 +170,7 @@ float FeatureExtractor::spectral_centroid(float *fft)
     float total_amp = 0;
     float bins = 0;
     for (int i = 1; i < BINS; i++) {
-        bins += i * fft[i];
+        bins += i * 43 * fft[i];
         total_amp += fft[i];
     }
     return bins / total_amp;
@@ -188,6 +215,3 @@ float FeatureExtractor::spectral_dissymmetry(float spectral_centroid, float *fft
     }
     return cbrtf(top / bottom);
 }
-
-
-

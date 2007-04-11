@@ -31,18 +31,16 @@ int main(int argc, const char *argv[])
         exit(EXIT_SUCCESS);
     }
     
-    // get file list
-    //const char ** key_songs = poptGetArgs(context);
-    
     float weights[32] = {
-                            0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0,
-                            0, 0
-                        };
+    	0, 0, 0, 0,
+    	0, 0, 0, 0,
+    	0, 0, 0, 0,
+    	0, 0, 0, 0,
+    	0, 0, 0, 0,
+    	0, 0, 0, 0,
+    	0, 0, 0, 0,
+    	0, 0, 0, 0
+    };
                         
     SongSet song_vectors(dir);
     song_vectors.normalise();
@@ -113,7 +111,11 @@ int main(int argc, const char *argv[])
     return 0;
 }
 
-/* from: http://www.codeproject.com/vcpp/stl/stdstringtrim.asp */
+/*
+ * The following code is used to remove leading and trailing space from
+ * a string, and was taken from a tutorial at:
+ * http://www.codeproject.com/vcpp/stl/stdstringtrim.asp
+ */
 void trim(std::string& str)
 {
     std::string::size_type pos = str.find_last_not_of(' ');

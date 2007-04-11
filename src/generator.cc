@@ -26,8 +26,10 @@ int main(int argc, const char *argv[])
     display_version = 0;
     verbose = 0;
     n_similar = 0;
+    interpolate = 10;
     dir = ".";
     comp_str = "ordered";
+    repeated_artist_str = "local";
     poptGetNextOpt(context);
     
     // need at least 1 file arg
@@ -56,6 +58,18 @@ int main(int argc, const char *argv[])
         std::cout << song_vectors.size() << " songs loaded" << std::endl;
     }
     
+    float comparison_weights[32] = { 
+		1, 1, 1, 1,
+		1, 1, 1, 1,
+		1, 1, 1, 1,
+		1, 1, 1, 1,
+		1, 1, 1, 1,
+		1, 1, 1, 1,
+		1, 1, 1, 1,
+		1, 1, 1, 1
+     };
+    weights = comparison_weights;
+    
     if (n_similar) {
         if (key_songs == NULL) {
             std::cout << "Please specify a key song with -s" << std::endl;
@@ -78,24 +92,9 @@ int main(int argc, const char *argv[])
                         0)
                     == 0) {
                 key = song_vectors.at(i);
-                //std::cout << key->filename << std::endl;
                 break;
             }
         }
-        
-        float comparison_weights[32] = {
-                                           0.910363, 0.980491, 0.997728, 0.988941, 0.976363, 0.976237, 0.999997, 0.998957, 0.999903, 1, 0.935608, 0.994193, 0.988748, 0.994201, 0.999557, 0.98892, 0.96306, 0.98984, 0.976346, 0.997441, 0.962884, 0.949067, 0.998862, 0.999293, 0.924049, 0.983407, 0.981964, 0.995814, 0.899965, 0.976676, 0.998863, 0.997049
-                                           /*
-                                                                                      1, 0, 0, 0,
-                                                                                      1, 0, 0, 0,
-                                                                                      1, 0, 0, 0,
-                                                                                      1, 0, 0, 0,
-                                                                                      1, 0, 0, 0,
-                                                                                      1, 0, 0, 0,
-                                                                                      1, 0, 0, 0,
-                                                                                      1, 0, 0, 0*/
-                                       };
-        weights = comparison_weights;
         
         std::sort(song_vectors.begin(), song_vectors.end(), song_cmp);
         
@@ -106,6 +105,114 @@ int main(int argc, const char *argv[])
                 std::cout << song_vectors.at(i)->filename.substr(0, song_vectors.at(i)->filename.length() - 4) << std::endl;
             }
         }
+    } else if (interpolate) {
+        // parse options
+        int repeated_artist = REPEATED_ARTIST_LOCAL;
+        if (strcasecmp(repeated_artist_str, "neighbour") == 0) {
+            repeated_artist = REPEATED_ARTIST_NEIGHBOUR;
+        } else if (strcasecmp(repeated_artist_str, "none") == 0) {
+            repeated_artist = REPEATED_ARTIST_NONE;
+        }
+        
+        
+        std::vector<Song *> keys;
+        std::vector<Song *> playlist;
+        // find the key songs, removing from the song_vectors list as we go
+        int i = 0;
+        while (key_songs[i] != NULL) {
+            Song* next_song = NULL;
+            unsigned int index = 0;
+            for (unsigned int j = song_vectors.size(); j--;) {
+                if (song_vectors.at(j)->filename == std::string(key_songs[i])) {
+                    next_song = song_vectors.at(j);
+                    index = j;
+                    break;
+                }
+            }
+            i++;
+            if (next_song == NULL) { continue; }
+            keys.push_back(next_song);
+            song_vectors.erase(song_vectors.begin() + index);
+            if (repeated_artist == REPEATED_ARTIST_NONE) {
+                for (unsigned int j = 0; j < song_vectors.size(); j++) {
+                    if (song_vectors.at(j)->get_artist() == next_song->get_artist()) {
+                        song_vectors.erase(song_vectors.begin() + j);
+                        j--;
+                    }
+                }
+            }
+        }
+        
+        // print out the keys
+        if (verbose) {
+            std::cout << "Keys:" << std::endl;
+            for (unsigned int i = 0; i < keys.size(); i++) {
+                std::cout << keys.at(i)->filename << std::endl;
+            }
+        }
+        
+        // loop over each key song
+        for (unsigned int i = 0; i < keys.size() - 1; i++) {
+            if (verbose) { std::cout << "Key: " << i << std::endl; }
+            Song* key = keys.at(i);
+            playlist.push_back(key);
+            for (int j = 0; j < interpolate; j++) {
+                if (verbose) { std::cout << "Interpolating: " << j << std::endl; }
+                FeatureGroup desired(key->song_features, keys.at(i + 1)->song_features, ((float)(j + 1) / (interpolate + 1)));
+                
+                // find best match
+                float best_dist = 99999;
+                Song* best_match = NULL;
+                unsigned int match_index = 0;
+                for (unsigned int k = 0; k < song_vectors.size(); k++) {
+                    // evaluate if track is best match
+                    Song* possible = song_vectors.at(k);
+                    
+                    if (repeated_artist == REPEATED_ARTIST_NEIGHBOUR && playlist.back()->get_artist() == possible->get_artist()) {
+                        continue;
+                    } else if (repeated_artist == REPEATED_ARTIST_LOCAL) {
+                        bool skip = false;
+                        for (unsigned int l = playlist.size() - j; l < playlist.size(); l++) {
+                            if (playlist.at(l)->get_artist() == possible->get_artist()) {
+                                skip = true;
+                                break;
+                            }
+                        }
+                        if (skip == true) { continue; }
+                    }
+                    
+                    float score = possible->song_features->compare(&desired, weights);
+                    if (score < best_dist) {
+                        best_dist = score;
+                        best_match = possible;
+                        match_index = k;
+                    }
+                }
+                // add to playlist and remove from available songs
+                playlist.push_back(best_match);
+                if (song_vectors.size() < match_index + 1) { break; }
+                song_vectors.erase(song_vectors.begin() + match_index);
+                if (repeated_artist == REPEATED_ARTIST_NONE) {
+                    for (unsigned int k = 0; k < song_vectors.size(); k++) {
+                        if (song_vectors.at(k)->get_artist() == best_match->get_artist()) {
+                            song_vectors.erase(song_vectors.begin() + k);
+                            k--;
+                        }
+                    }
+                }
+                if (song_vectors.size() == 0) {
+                    break;
+                }
+            }
+        }
+        playlist.push_back(keys.back());
+        
+        std::vector<Song*>::iterator it = playlist.begin();
+        while (it != playlist.end()) {
+            std::cout << (*it)->filename << std::endl;
+            it++;
+        }
+        
     }
     
     poptFreeContext(context);

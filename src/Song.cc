@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include "common.hh"
+#include "Features.hh"
 #include "Song.hh"
 
 
@@ -115,20 +116,30 @@ bool Song::has_nan()
     return 0;
 }
 
-
+std::string Song::get_artist()
+{
+    unsigned int slash_pos[filename.length()];
+    slash_pos[0] = filename.length();
+    for (unsigned int i = 1; i < filename.length(); i++) {
+        slash_pos[i] = filename.rfind("/", slash_pos[i - 1] - 1);
+        if (slash_pos[i] == std::string::npos) { break; }
+    }
+    // between 3 and 2
+    return filename.substr(slash_pos[3] + 1, slash_pos[2] - slash_pos[3] - 1);
+}
 
 float Song::compare(Song* other)
 {
     float weights[/*NUMBER_OF_FEATURES * NUMBER_OF_AGGREGATE_STATS*/ 32] =
         {
-            1, 0, 0, 0,
-            1, 0, 0, 0,
-            1, 0, 0, 0,
-            1, 0, 0, 0,
-            1, 0, 0, 0,
-            1, 0, 0, 0,
-            1, 0, 0, 0,
-            1, 0, 0, 0
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1
         };
     return compare(other, weights, ORDERED);
 }
@@ -137,17 +148,16 @@ float* comparison_weights;
 
 float Song::compare(Song* other, float* weights, int comparison_function)
 {
-    //std::cout << comparison_function;
     float song_diff, block_diff;
     block_diff = 0;
-    song_diff = compareFeatureGroup(song_features, other->song_features, weights);
+    song_diff = song_features->compare(other->song_features, weights);
     CHECK(song_diff)
     
     switch (comparison_function) {
         case ORDERED: {
             int smallest_feature_block_count = feature_blocks->size() < other->feature_blocks->size() ? feature_blocks->size() : other->feature_blocks->size();
             for (int i = 0; i < smallest_feature_block_count; i++) {
-                block_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(i), weights);
+                block_diff += feature_blocks->at(i)->compare(other->feature_blocks->at(i), weights);
                 CHECK(block_diff)
             }
             CHECK((song_diff * SONG_FEATURE_WEIGHT) + ((block_diff / smallest_feature_block_count) * BLOCK_FEATURE_WEIGHT))
@@ -157,11 +167,11 @@ float Song::compare(Song* other, float* weights, int comparison_function)
             int smallest_feature_block_count = feature_blocks->size() < other->feature_blocks->size() ? feature_blocks->size() : other->feature_blocks->size();
             for (int i = 0; i < smallest_feature_block_count; i++) {
                 if (i != 0) {
-                    block_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(i - 1), weights);
+                    block_diff += feature_blocks->at(i)->compare(other->feature_blocks->at(i - 1), weights);
                 }
-                block_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(i), weights);
+                block_diff += feature_blocks->at(i)->compare(other->feature_blocks->at(i), weights);
                 if (i != smallest_feature_block_count - 1) {
-                    block_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(i + 1), weights);
+                    block_diff += feature_blocks->at(i)->compare(other->feature_blocks->at(i + 1), weights);
                 }
                 CHECK(block_diff)
             }
@@ -174,7 +184,7 @@ float Song::compare(Song* other, float* weights, int comparison_function)
             std::sort(other->feature_blocks->begin(), other->feature_blocks->end(), fg_cmp);
             int smallest_feature_block_count = feature_blocks->size() < other->feature_blocks->size() ? feature_blocks->size() : other->feature_blocks->size();
             for (int i = 0; i < smallest_feature_block_count; i++) {
-                block_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(i), weights);
+                block_diff += feature_blocks->at(i)->compare(other->feature_blocks->at(i), weights);
                 CHECK(block_diff)
             }
             CHECK((song_diff * SONG_FEATURE_WEIGHT) + ((block_diff / smallest_feature_block_count) * BLOCK_FEATURE_WEIGHT))
@@ -185,7 +195,7 @@ float Song::compare(Song* other, float* weights, int comparison_function)
             unsigned int i = 0, j = 0;
             for (i = 0; i < feature_blocks->size(); i++) {
                 for (j = 0; j < other->feature_blocks->size(); j++) {
-                    block_diff += compareFeatureGroup(feature_blocks->at(i), other->feature_blocks->at(j), weights);
+                    block_diff += feature_blocks->at(i)->compare(other->feature_blocks->at(j), weights);
                     CHECK(block_diff)
                 }
             }
@@ -213,19 +223,3 @@ bool fg_cmp(FeatureGroup* fg1, FeatureGroup* fg2)
     return first_total > second_total;
 }
 
-
-float compareFeatureGroup(FeatureGroup* a, FeatureGroup* b, float* weights)
-{
-    float mean_diff = 0, variance_diff = 0, skewness_diff = 0, kurtosis_diff = 0;
-    for (int i = NUMBER_OF_FEATURES; i--;) {
-        mean_diff += fabsf(fabsf(a->mean[i]) - fabsf(b->mean[i])) * WEIGHT(i, MEAN);
-        CHECK(mean_diff)
-        variance_diff += fabsf(fabsf(a->variance[i]) - fabsf(b->variance[i])) * WEIGHT(i, VARIANCE);
-        CHECK(variance_diff)
-        skewness_diff += fabsf(fabsf(a->skewness[i]) - fabsf(b->skewness[i])) * WEIGHT(i, SKEWNESS);
-        CHECK(skewness_diff)
-        kurtosis_diff += fabsf(fabsf(a->kurtosis[i]) - fabsf(b->kurtosis[i])) * WEIGHT(i, KURTOSIS);
-        CHECK(kurtosis_diff)
-    }
-    return mean_diff + variance_diff + skewness_diff + kurtosis_diff;
-}

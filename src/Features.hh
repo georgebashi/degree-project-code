@@ -1,7 +1,7 @@
 // $Id$
 
-#ifndef FEATURES_H
-#define FEATURES_H
+#ifndef FEATURES_HH
+#define FEATURES_HH
 
 #define NUMBER_OF_FEATURES 8
 
@@ -23,7 +23,7 @@
 #define ZCR_SCHWARZ
 
 #define SONG_FEATURE_WEIGHT 1
-#define BLOCK_FEATURE_WEIGHT 1
+#define BLOCK_FEATURE_WEIGHT 0
 
 #include <vector>
 
@@ -40,18 +40,15 @@ class FeatureGroup
     public:
         FeatureGroup() {};
         FeatureGroup(std::vector<FeatureSet *>* sets);
+        FeatureGroup(FeatureGroup* fg1, FeatureGroup* fg2, float dist);
+        
+        float compare(FeatureGroup* other, float* weights);
+        
         float mean[NUMBER_OF_FEATURES];
         float variance[NUMBER_OF_FEATURES];
         float skewness[NUMBER_OF_FEATURES];
         float kurtosis[NUMBER_OF_FEATURES];
 };
-
-float get_mean(float *data, int n);
-float get_variance(float *data, float mean, int n);
-float get_stdev(float variance);
-float get_skewness(float *data, float mean, float stdev, int n);
-float get_kurtosis(float *data, float mean, float stdev, int n);
-inline float check_nan(float n);
 
 class FeatureExtractor
 {
@@ -68,6 +65,11 @@ class FeatureExtractor
         float spectral_dissymmetry(float spectral_centroid, float *fft);
 };
 
-
+float get_mean(float *data, int n);
+float get_variance(float *data, float mean, int n);
+float get_stdev(float variance);
+float get_skewness(float *data, float mean, float stdev, int n);
+float get_kurtosis(float *data, float mean, float stdev, int n);
+inline float check_nan(float n);
 
 #endif

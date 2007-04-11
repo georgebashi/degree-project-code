@@ -12,7 +12,7 @@
 SoundFile::SoundFile(std::string filename)
 {
     // find name for temp file
-    tmp_filename = tempnam("/decode", "dec-");
+    tmp_filename = tempnam("/tmp", "dec-");
     // fire up gstreamer
     std::cout << ": decode";
     std::string cmdline;
@@ -24,7 +24,6 @@ SoundFile::SoundFile(std::string filename)
     
     free(pwd);
     
-    //std::cout << "cmdline: " << cmdline << std::endl;
     system(cmdline.c_str());
     
     sfinfo = (SF_INFO *) calloc(1, sizeof(SF_INFO));

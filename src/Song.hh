@@ -6,12 +6,12 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <cassert>
 #include "Features.hh"
 #include "Song.hh"
 
 #ifdef DEBUG
-#define CHECK(x) if (!std::isnormal(x)) { /*std::cout << "!"; return 0;*/ }
-// #define CHECK(x) (assert(fpclassify(x) == FP_NORMAL))
+#define CHECK(x) (assert(fpclassify(x) == FP_NORMAL))
 #else
 #define CHECK(x)
 #endif
@@ -40,6 +40,7 @@ class Song
         void addBlock(FeatureGroup* block);
         void setSongFeatures(FeatureGroup* song_features);
         void write(std::ofstream* output);
+        std::string get_artist();
         float compare(Song* other);
         float compare(Song* other, float* weights, int comparison_function);
         std::string filename;
@@ -53,6 +54,5 @@ class Song
 bool fg_cmp(FeatureGroup* fg1, FeatureGroup* fg2);
 FeatureGroup* readFeatureGroup(std::ifstream* input);
 void writeFeatureGroup(std::ofstream* output, FeatureGroup* feature_group);
-float compareFeatureGroup(FeatureGroup* a, FeatureGroup* b, float* weights);
 
 #endif

@@ -41,10 +41,6 @@ int read_song_files(const char *fpath, const struct stat *sb, int typeflag)
     if (!next->has_nan())
     {
         initialising->push_back(next);
-    } else
-    {
-        //std::cout << "!";
-        //std::cout << "Skipped: " << next->filename << " (" << next->feature_blocks->size() << " blocks)" << std::endl;
     }
     
     return 0;

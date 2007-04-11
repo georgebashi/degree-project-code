@@ -1,7 +1,7 @@
 // $Id$
 
-#ifndef SOUNDFILE_H
-#define SOUNDFILE_H
+#ifndef SOUNDFILE_HH
+#define SOUNDFILE_HH
 
 #include <string>
 #include <sndfile.h>
