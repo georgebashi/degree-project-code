@@ -5,7 +5,7 @@ indent-classes
 indent-switches
 indent-preprocessor
 pad=oper
-unpad=paren
+# unpad=paren
 one-line=keep-statements
 one-line=keep-blocks
 convert-tabs
