@@ -11,7 +11,7 @@ elif(int(profile)):
 	env = Environment(CCFLAGS = '-g -O0 -DDEBUG -pg', LINKFLAGS = '-g -pg')
 else:
 #	env = Environment(CCFLAGS = '-O3 -funroll-loops -fomit-frame-pointer -march=athlon-xp')
-	env = Environment(CCFLAGS = '-O3 -Wall -Wunsafe-loop-optimizations -funsafe-loop-optimizations -funroll-loops -fomit-frame-pointer -march=athlon-xp')
+	env = Environment(CCFLAGS = '-O3 -Wall -Wunsafe-loop-optimizations -funsafe-loop-optimizations -funroll-loops -fomit-frame-pointer -march=prescott')
 
 if not env.GetOption('clean'):
 	conf = Configure(env)

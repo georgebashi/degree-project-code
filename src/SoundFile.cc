@@ -20,14 +20,14 @@ SoundFile::SoundFile(std::string filename)
     
     cmdline.append("/usr/bin/gst-launch-0.10 filesrc location=\"").append(pwd).append("/").append(filename);
     cmdline.append("\" ! decodebin ! audioconvert ! audio/x-raw-int,channels=1,rate=44100 ! wavenc ! filesink location=");
-    cmdline.append(tmp_filename).append(" &> /dev/null");
+    cmdline.append(tmp_filename).append(" > /dev/null 2>&1");
     
     free(pwd);
     
     system(cmdline.c_str());
     
     sfinfo = (SF_INFO *) calloc(1, sizeof(SF_INFO));
-    if (!(sf_in = sf_open(tmp_filename, SFM_READ, sfinfo))) {
+    if ((sf_in = sf_open(tmp_filename, SFM_READ, sfinfo)) == NULL) {
         throw std::string(sf_strerror(sf_in));
     }
 }
