@@ -59,35 +59,14 @@ int row_num = 1;
 void print_feature_group(FeatureGroup* group)
 {
     std::cout << row_num++ << ",";
-    for (unsigned int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-        if (!std::isnormal(group->mean[feature])) {
-            std::cout << "\"NaN: " << std::fpclassify(group->mean[feature]) << "\",";
-        } else {
-            std::cout << group->mean[feature] << ",";
+    for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+        for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+            if (!std::isnormal(group->features[feature][stat])) {
+                std::cout << "\"NaN: " << std::fpclassify(group->features[feature][stat]) << "\",";
+            } else {
+                std::cout << group->features[feature][stat] << ",";
+            }
         }
-    }
-    for (unsigned int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-    
-        if (!std::isnormal(group->variance[feature])) {
-            std::cout << "\"NaN: " << std::fpclassify(group->variance[feature]) << "\",";
-        } else {
-            std::cout << group->variance[feature] << ",";
-        }
-    }
-    for (unsigned int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-        if (!std::isnormal(group->skewness[feature])) {
-            std::cout << "\"NaN: " << std::fpclassify(group->skewness[feature]) << "\",";
-        } else {
-            std::cout << group->skewness[feature] << ",";
-        }
-    }
-    for (unsigned int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-        if (!std::isnormal(group->kurtosis[feature])) {
-            std::cout << "\"NaN: " << std::fpclassify(group->kurtosis[feature]) << "\"";
-        } else {
-            std::cout << group->kurtosis[feature];
-        }
-        if (feature < NUMBER_OF_FEATURES - 1) { std::cout << ","; }
     }
     std::cout << std::endl;
 }

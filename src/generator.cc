@@ -9,11 +9,12 @@
 #include "Features.hh"
 #include "Song.hh"
 #include "SongSet.hh"
+#include "Playlist.hh"
 #include "generator.hh"
 
 
 Song* key;
-float* weights;
+float (*weights)[NUMBER_OF_AGGREGATE_STATS];
 int comparison_function;
 
 int main(int argc, const char *argv[])
@@ -58,16 +59,16 @@ int main(int argc, const char *argv[])
         std::cout << song_vectors.size() << " songs loaded" << std::endl;
     }
     
-    float comparison_weights[32] = {
-                                       1, 1, 1, 1,
-                                       1, 1, 1, 1,
-                                       1, 1, 1, 1,
-                                       1, 1, 1, 1,
-                                       1, 1, 1, 1,
-                                       1, 1, 1, 1,
-                                       1, 1, 1, 1,
-                                       1, 1, 1, 1
-                                   };
+    float comparison_weights[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS] = {
+                { 1, 0, 0, 0 },
+                { 1, 0, 0, 0 },
+                { 1, 0, 0, 0 },
+                { 1, 0, 0, 0 },
+                { 1, 0, 0, 0 },
+                { 1, 0, 0, 0 },
+                { 1, 0, 0, 0 },
+                { 1, 0, 0, 0 }
+            };
     weights = comparison_weights;
     
     if (n_similar) {
@@ -106,6 +107,11 @@ int main(int argc, const char *argv[])
             }
         }
     } else if (interpolate) {
+        if (key_songs == NULL) {
+            std::cout << "Please specify some key songs" << std::endl;
+            exit(0);
+        }
+        
         // parse options
         int repeated_artist = REPEATED_ARTIST_LOCAL;
         if (strcasecmp(repeated_artist_str, "neighbour") == 0) {
@@ -116,10 +122,10 @@ int main(int argc, const char *argv[])
         
         
         std::vector<Song *> keys;
-        std::vector<Song *> playlist;
         // find the key songs, removing from the song_vectors list as we go
         int i = 0;
         while (key_songs[i] != NULL) {
+            //std::cout << key_songs[i] << std::endl;
             Song* next_song = NULL;
             unsigned int index = 0;
             for (unsigned int j = song_vectors.size(); j--;) {
@@ -130,7 +136,7 @@ int main(int argc, const char *argv[])
                 }
             }
             i++;
-            if (next_song == NULL) { continue; }
+            if (next_song == NULL) { std::cout << "Couldn't find, skipping!" << std::endl; continue; }
             keys.push_back(next_song);
             song_vectors.erase(song_vectors.begin() + index);
             if (repeated_artist == REPEATED_ARTIST_NONE) {
@@ -142,77 +148,9 @@ int main(int argc, const char *argv[])
                 }
             }
         }
-        
-        // print out the keys
-        if (verbose) {
-            std::cout << "Keys:" << std::endl;
-            for (unsigned int i = 0; i < keys.size(); i++) {
-                std::cout << keys.at(i)->filename << std::endl;
-            }
-        }
-        
-        // loop over each key song
-        for (unsigned int i = 0; i < keys.size() - 1; i++) {
-            if (verbose) { std::cout << "Key: " << i << std::endl; }
-            Song* key = keys.at(i);
-            playlist.push_back(key);
-            for (int j = 0; j < interpolate; j++) {
-                if (verbose) { std::cout << "Interpolating: " << j << std::endl; }
-                FeatureGroup desired(key->song_features, keys.at(i + 1)->song_features, ((float)(j + 1) / (interpolate + 1)));
-                
-                // find best match
-                float best_dist = 99999;
-                Song* best_match = NULL;
-                unsigned int match_index = 0;
-                for (unsigned int k = 0; k < song_vectors.size(); k++) {
-                    // evaluate if track is best match
-                    Song* possible = song_vectors.at(k);
-                    
-                    if (repeated_artist == REPEATED_ARTIST_NEIGHBOUR && playlist.back()->get_artist() == possible->get_artist()) {
-                        continue;
-                    } else if (repeated_artist == REPEATED_ARTIST_LOCAL) {
-                        bool skip = false;
-                        for (unsigned int l = playlist.size() - j; l < playlist.size(); l++) {
-                            if (playlist.at(l)->get_artist() == possible->get_artist()) {
-                                skip = true;
-                                break;
-                            }
-                        }
-                        if (skip == true) { continue; }
-                    }
-                    
-                    float score = possible->song_features->compare(&desired, weights);
-                    if (score < best_dist) {
-                        best_dist = score;
-                        best_match = possible;
-                        match_index = k;
-                    }
-                }
-                // add to playlist and remove from available songs
-                playlist.push_back(best_match);
-                if (song_vectors.size() < match_index + 1) { break; }
-                song_vectors.erase(song_vectors.begin() + match_index);
-                if (repeated_artist == REPEATED_ARTIST_NONE) {
-                    for (unsigned int k = 0; k < song_vectors.size(); k++) {
-                        if (song_vectors.at(k)->get_artist() == best_match->get_artist()) {
-                            song_vectors.erase(song_vectors.begin() + k);
-                            k--;
-                        }
-                    }
-                }
-                if (song_vectors.size() == 0) {
-                    break;
-                }
-            }
-        }
-        playlist.push_back(keys.back());
-        
-        std::vector<Song*>::iterator it = playlist.begin();
-        while (it != playlist.end()) {
-            std::cout << (*it)->filename << std::endl;
-            it++;
-        }
-        
+        // generate a playlist!
+        Playlist playlist(&song_vectors, keys, interpolate, weights, comparison_function);
+        playlist.print();
     }
     
     poptFreeContext(context);

@@ -13,6 +13,8 @@ else:
 #	env = Environment(CCFLAGS = '-O3 -funroll-loops -fomit-frame-pointer -march=athlon-xp')
 	env = Environment(CCFLAGS = '-O3 -Wall -Wunsafe-loop-optimizations -funsafe-loop-optimizations -funroll-loops -fomit-frame-pointer -march=prescott')
 
+env.SetOption("num_jobs", 3)
+
 if not env.GetOption('clean'):
 	conf = Configure(env)
 	if not conf.CheckLibWithHeader('popt', 'popt.h', 'C'):
@@ -28,10 +30,11 @@ if not env.GetOption('clean'):
 else:
 	Execute(Delete("gmon.out"))
 	Execute(Delete("config.log"))
-	os.system("astyle --options=astylerc *{cc,hh}")
+	os.system("astyle --options=astylerc *cc *hh")
+	os.system("rm -rf *none")
 	os.system("../../report/appendicies/code/highlight.sh")
 
-libfeature_files = Split("SongSet.cc Song.cc Features.cc FFT.cc SoundFile.cc")
+libfeature_files = Split("Playlist.cc SongSet.cc Song.cc Features.cc FFT.cc SoundFile.cc")
 extractor_files = Split("extractor.cc")
 generator_files = Split("generator.cc")
 viewer_files = Split("viewer.cc")

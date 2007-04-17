@@ -11,12 +11,13 @@
 #include "Song.hh"
 
 #ifdef DEBUG
-#define CHECK(x) assert(std::fpclassify(x) == FP_NORMAL);
+// #define CHECK(x) assert(std::fpclassify(x) == FP_NORMAL);
+#define CHECK(x)
 #else
 #define CHECK(x)
 #endif
 
-#define WEIGHT(F,S) (weights[(((F) * (NUMBER_OF_AGGREGATE_STATS)) + (S))])
+// #define WEIGHT(F,S) (weights[(((F) * (NUMBER_OF_AGGREGATE_STATS)) + (S))])
 
 #define ORDERED 0
 #define ORDERED_AREA 1
@@ -42,7 +43,7 @@ class Song
         void write(std::ofstream* output);
         std::string get_artist();
         float compare(Song* other);
-        float compare(Song* other, float* weights, int comparison_function);
+        float compare(Song* other, float (*weights)[NUMBER_OF_AGGREGATE_STATS], int comparison_function);
         std::string filename;
         FeatureGroup* song_features;
         std::vector<FeatureGroup *>* feature_blocks;

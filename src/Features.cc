@@ -26,38 +26,32 @@ FeatureGroup::FeatureGroup(std::vector<FeatureSet *>* sets)
         for (unsigned int i = 0; i < data_points; i++) {
             data[i] = sets->at(i)->features[feature];
         }
-        mean[feature] = get_mean(data, data_points);
-        variance[feature] = get_variance(data, mean[feature], data_points);
-        float stdev = get_stdev(variance[feature]);
-        skewness[feature] = get_skewness(data, mean[feature], stdev, data_points);
-        kurtosis[feature] = get_kurtosis(data, mean[feature], stdev, data_points);
+        features[feature][MEAN] = get_mean(data, data_points);
+        features[feature][VARIANCE] = get_variance(data, features[feature][MEAN], data_points);
+        float stdev = get_stdev(features[feature][VARIANCE]);
+        features[feature][SKEWNESS] = get_skewness(data, features[feature][MEAN], stdev, data_points);
+        features[feature][KURTOSIS] = get_kurtosis(data, features[feature][MEAN], stdev, data_points);
     }
 }
 
 FeatureGroup::FeatureGroup(FeatureGroup* fg1, FeatureGroup* fg2, float dist)
 {
-    for (int i = 0; i < NUMBER_OF_FEATURES; i++) {
-        this->mean[i] = fg1->mean[i] + (dist * (fg2->mean[i] - fg1->mean[i]));
-        this->variance[i] = fg1->variance[i] + (dist * (fg2->variance[i] - fg1->variance[i]));
-        this->skewness[i] = fg1->skewness[i] + (dist * (fg2->skewness[i] - fg1->skewness[i]));
-        this->kurtosis[i] = fg1->kurtosis[i] + (dist * (fg2->kurtosis[i] - fg1->kurtosis[i]));
+    for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+        for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+            this->features[feature][stat] = fg1->features[feature][stat] + (dist * (fg2->features[feature][stat] - fg1->features[feature][stat]));
+        }
     }
 }
 
-float FeatureGroup::compare(FeatureGroup* other, float* weights)
+float FeatureGroup::compare(FeatureGroup* other, float (*weights)[NUMBER_OF_AGGREGATE_STATS])
 {
-    float mean_diff = 0, variance_diff = 0, skewness_diff = 0, kurtosis_diff = 0;
-    for (int i = NUMBER_OF_FEATURES; i--;) {
-        mean_diff += fabsf(fabsf(mean[i]) - fabsf(other->mean[i])) * WEIGHT(i, MEAN);
-        CHECK(mean_diff)
-        variance_diff += fabsf(fabsf(variance[i]) - fabsf(other->variance[i])) * WEIGHT(i, VARIANCE);
-        CHECK(variance_diff)
-        skewness_diff += fabsf(fabsf(skewness[i]) - fabsf(other->skewness[i])) * WEIGHT(i, SKEWNESS);
-        CHECK(skewness_diff)
-        kurtosis_diff += fabsf(fabsf(kurtosis[i]) - fabsf(other->kurtosis[i])) * WEIGHT(i, KURTOSIS);
-        CHECK(kurtosis_diff)
+    float diff = 0;
+    for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+        for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+            diff += fabsf((features[feature][stat] - other->features[feature][stat]) * weights[feature][stat]);
+        }
     }
-    return mean_diff + variance_diff + skewness_diff + kurtosis_diff;
+    return diff;
 }
 
 float get_mean(float *data, int n)
@@ -105,7 +99,7 @@ FeatureSet* FeatureExtractor::process(float* signal, float* fft)
     features[FIRST_ORDER_AUTOCORRELATION] = check_nan(first_order_autocorrelation(signal));
     features[LINEAR_REGRESSION] = check_nan(linear_regression(fft));
     features[SPECTRAL_CENTROID] = check_nan(spectral_centroid(fft));
-    features[SPECTRAL_INTENSITY] = check_nan(spectral_intensity(fft));
+    features[ENERGY] = check_nan(energy(signal));
     features[SPECTRAL_SMOOTHNESS] = check_nan(spectral_smoothness(fft));
     features[SPECTRAL_SPREAD] = check_nan(spectral_spread(features[SPECTRAL_CENTROID], fft));
     features[SPECTRAL_DISSYMMETRY] = check_nan(spectral_dissymmetry(features[SPECTRAL_CENTROID], fft));
@@ -122,7 +116,7 @@ float FeatureExtractor::zero_crossing_rate(float *signal)
     unsigned int total = 0;
     for (unsigned int i = WINDOW_SIZE - 1; i--;) {
 #ifdef ZCR_SCHWARZ
-        total += (signal[i] < 0 ? 1 : 0) ^(signal[i + 1] < 0 ? 1 : 0);
+        total += (signal[i] < 0 ? 1 : 0) ^ (signal[i + 1] < 0 ? 1 : 0);
 #else
         total += ((signal[i] * signal[i + 1]) < 0);
 #endif
@@ -143,13 +137,6 @@ float FeatureExtractor::first_order_autocorrelation(float *signal)
 float FeatureExtractor::linear_regression(float *fft)
 {
     float n = BINS - 1; // number of data points
-    /*
-     sum up
-      x * y
-      x
-      y
-      pow(x, 2)
-    */
     float Sxy = 0, Sy = 0;
     unsigned int freq = 0, Sx = 5625088, Sxx = 876286720;
     for (unsigned int i = 1; i < BINS; i++) {
@@ -176,15 +163,18 @@ float FeatureExtractor::spectral_centroid(float *fft)
     return bins / total_amp;
 }
 
-float FeatureExtractor::spectral_intensity(float *fft)
+float FeatureExtractor::energy(float *signal)
 {
-    return fft[0];
+    float Sxi = 0;
+    for (int i = 0; i < WINDOW_SIZE; i++) {
+        Sxi += pow(signal[i], 2);
+    }
+    return (1 / WINDOW_SIZE) * Sxi;
 }
 
 float FeatureExtractor::spectral_smoothness(float *fft)
 {
     float ss = 0;
-    //for (unsigned int i = 2; i < BINS - 1; i++) {
     for (unsigned int i = BINS - 1; i-- != 2;) {
         ss += (20 * logf(fft[i])) - ((
                                          (20 * logf(fft[i - 1])) +

@@ -4,6 +4,8 @@
 #include <vector>
 #include <ftw.h>
 #include <cmath>
+#include <map>
+#include <cfloat>
 
 #include "common.hh"
 #include "Song.hh"
@@ -48,84 +50,67 @@ int read_song_files(const char *fpath, const struct stat *sb, int typeflag)
 
 void SongSet::normalise()
 {
-    float song_vector[32];
-    float block_vector[32];
+#define MIN 0
+#define MAX 1
+    float song_vector[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS][2];
+    float block_vector[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS][2];
     
     // initialise with first values from first song
-    for (int i = 0; i < NUMBER_OF_FEATURES; i++) {
-        song_vector[(i * NUMBER_OF_AGGREGATE_STATS) + MEAN] = this->at(0)->song_features->mean[i];
-        song_vector[(i * NUMBER_OF_AGGREGATE_STATS) + VARIANCE] = this->at(0)->song_features->variance[i];
-        song_vector[(i * NUMBER_OF_AGGREGATE_STATS) + SKEWNESS] = this->at(0)->song_features->skewness[i];
-        song_vector[(i * NUMBER_OF_AGGREGATE_STATS) + KURTOSIS] = this->at(0)->song_features->kurtosis[i];
-        
-        block_vector[(i * NUMBER_OF_AGGREGATE_STATS) + MEAN] = this->at(0)->feature_blocks->at(0)->mean[i];
-        block_vector[(i * NUMBER_OF_AGGREGATE_STATS) + VARIANCE] = this->at(0)->feature_blocks->at(0)->variance[i];
-        block_vector[(i * NUMBER_OF_AGGREGATE_STATS) + SKEWNESS] = this->at(0)->feature_blocks->at(0)->skewness[i];
-        block_vector[(i * NUMBER_OF_AGGREGATE_STATS) + KURTOSIS] = this->at(0)->feature_blocks->at(0)->kurtosis[i];
-        
-        
+    for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+        for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+            song_vector[feature][stat][MIN] = song_vector[feature][stat][MAX] = this->at(0)->song_features->features[feature][stat];
+            block_vector[feature][stat][MIN] = block_vector[feature][stat][MAX] = this->at(0)->feature_blocks->at(0)->features[feature][stat];
+        }
     }
     
-    // grab the numbers
+    // find max and min
     for (unsigned int i = 0; i < this->size(); i++) {
         Song* song = this->at(i);
         
         for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-            if (fabsf(song->song_features->mean[feature]) > song_vector[feature + (MEAN * NUMBER_OF_FEATURES)]) {
-                song_vector[feature + (MEAN * NUMBER_OF_FEATURES)] = fabsf(song->song_features->mean[feature]);
-            }
-            
-            if (fabsf(song->song_features->variance[feature]) > song_vector[feature + (VARIANCE * NUMBER_OF_FEATURES)]) {
-                song_vector[feature + (VARIANCE * NUMBER_OF_FEATURES)] = fabsf(song->song_features->variance[feature]);
-            }
-            
-            if (fabsf(song->song_features->skewness[feature]) > song_vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)]) {
-                song_vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)] = fabsf(song->song_features->skewness[feature]);
-            }
-            
-            if (fabsf(song->song_features->kurtosis[feature]) > song_vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)]) {
-                song_vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)] = fabsf(song->song_features->kurtosis[feature]);
-            }
-            
-            
-            for (unsigned int block = 0; block < song->feature_blocks->size(); block++) {
-                if (fabsf(song->feature_blocks->at(block)->mean[feature]) > block_vector[feature + (MEAN * NUMBER_OF_FEATURES)]) {
-                    block_vector[feature + (MEAN * NUMBER_OF_FEATURES)] = fabsf(song->feature_blocks->at(block)->mean[feature]);
+            for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+                if (song->song_features->features[feature][stat] < song_vector[feature][stat][MIN]) {
+                    song_vector[feature][stat][MIN] = song->song_features->features[feature][stat];
                 }
                 
-                if (fabsf(song->feature_blocks->at(block)->variance[feature]) > block_vector[feature + (VARIANCE * NUMBER_OF_FEATURES)]) {
-                    block_vector[feature + (VARIANCE * NUMBER_OF_FEATURES)] = fabsf(song->feature_blocks->at(block)->variance[feature]);
+                if (song->song_features->features[feature][stat] > song_vector[feature][stat][MAX]) {
+                    song_vector[feature][stat][MAX] = song->song_features->features[feature][stat];
                 }
                 
-                if (fabsf(song->feature_blocks->at(block)->skewness[feature]) > block_vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)]) {
-                    block_vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)] = fabsf(song->feature_blocks->at(block)->skewness[feature]);
-                }
-                
-                if (fabsf(song->feature_blocks->at(block)->kurtosis[feature]) > block_vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)]) {
-                    block_vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)] = fabsf(song->feature_blocks->at(block)->kurtosis[feature]);
+                for (unsigned int block = 0; block < song->feature_blocks->size(); block++) {
+                    if (song->feature_blocks->at(block)->features[feature][stat] < block_vector[feature][stat][MIN]) {
+                        block_vector[feature][stat][MIN] = song->feature_blocks->at(block)->features[feature][stat];
+                    }
+                    
+                    if (song->feature_blocks->at(block)->features[feature][stat] > block_vector[feature][stat][MAX]) {
+                        block_vector[feature][stat][MAX] = song->feature_blocks->at(block)->features[feature][stat];
+                    }
                 }
             }
         }
     }
     
-    // apply!
+    // normalise!
     for (unsigned int i = 0; i < this->size(); i++) {
         Song* song = this->at(i);
         
         for (unsigned int block = 0; block < song->feature_blocks->size(); block++) {
             for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-                song->feature_blocks->at(block)->mean[feature] /= block_vector[feature + (MEAN * NUMBER_OF_FEATURES)];
-                song->feature_blocks->at(block)->variance[feature] /= block_vector[feature + (VARIANCE * NUMBER_OF_FEATURES)];
-                song->feature_blocks->at(block)->skewness[feature] /= block_vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)];
-                song->feature_blocks->at(block)->kurtosis[feature] /= block_vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)];
+                for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+                    song->feature_blocks->at(block)->features[feature][stat] =
+                        (song->feature_blocks->at(block)->features[feature][stat] - block_vector[feature][stat][MIN]) /
+                        (block_vector[feature][stat][MAX] - block_vector[feature][stat][MIN]);
+                }
             }
         }
         
         for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
-            song->song_features->mean[feature] /= song_vector[feature + (MEAN * NUMBER_OF_FEATURES)];
-            song->song_features->variance[feature] /= song_vector[feature + (VARIANCE * NUMBER_OF_FEATURES)];
-            song->song_features->skewness[feature] /= song_vector[feature + (SKEWNESS * NUMBER_OF_FEATURES)];
-            song->song_features->kurtosis[feature] /= song_vector[feature + (KURTOSIS * NUMBER_OF_FEATURES)];
+            for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+                song->song_features->features[feature][stat] =
+                    (song->song_features->features[feature][stat] - song_vector[feature][stat][MIN]) /
+                    (song_vector[feature][stat][MAX] - song_vector[feature][stat][MIN]);
+            }
         }
     }
 }
+

@@ -31,17 +31,17 @@ int main(int argc, const char *argv[])
         exit(EXIT_SUCCESS);
     }
     
-    float weights[32] = {
-                            0, 0, 0, 0,
-                            0, 0, 0, 0,
-                            0, 0, 0, 0,
-                            0, 0, 0, 0,
-                            0, 0, 0, 0,
-                            0, 0, 0, 0,
-                            0, 0, 0, 0,
-                            0, 0, 0, 0
-                        };
-                        
+    float weights[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS] = {
+                { 0, 0, 0, 0 },
+                { 0, 0, 0, 0 },
+                { 0, 0, 0, 0 },
+                { 0, 0, 0, 0 },
+                { 0, 0, 0, 0 },
+                { 0, 0, 0, 0 },
+                { 0, 0, 0, 0 },
+                { 0, 0, 0, 0 }
+            };
+            
     SongSet song_vectors(dir);
     song_vectors.normalise();
     
@@ -68,24 +68,22 @@ int main(int argc, const char *argv[])
             trim(similar_a);
             trim(similar_b);
             trim(not_similar);
-            //printf("key: %s\nsimilar: %s\nnot_similar: %s\n", key.c_str(), similar.c_str(), not_similar.c_str());
             
-            // DO THINGS
             Song* song_similar_a = song_vectors.get_by_filename(similar_a + ".vec");
             Song* song_similar_b = song_vectors.get_by_filename(similar_b + ".vec");
             Song* song_not_similar = song_vectors.get_by_filename(not_similar + ".vec");
             
             if (song_similar_a == NULL | song_similar_b == NULL | song_not_similar == NULL) {
-                //std::cerr << "Couldn't find song!" << std::endl;
                 continue;
             }
             
-            for (int i = 0; i < NUMBER_OF_FEATURES; i++) {
-                //std::cout << song_similar_a->song_features->mean[i] << std::endl;
-                WEIGHT(i, MEAN) += 1 - (fabsf(fabsf(song_similar_a->song_features->mean[i]) - fabsf(song_similar_b->song_features->mean[i])));
-                WEIGHT(i, VARIANCE) += 1 - (fabsf(fabsf(song_similar_a->song_features->variance[i]) - fabsf(song_similar_b->song_features->variance[i])));
-                WEIGHT(i, SKEWNESS) += 1 - (fabsf(fabsf(song_similar_a->song_features->skewness[i]) - fabsf(song_similar_b->song_features->skewness[i])));
-                WEIGHT(i, KURTOSIS) += 1 - (fabsf(fabsf(song_similar_a->song_features->kurtosis[i]) - fabsf(song_similar_b->song_features->kurtosis[i])));
+            for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+                for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+                    weights[feature][stat] +=
+                        1 -
+                        song_similar_a->song_features->features[feature][stat] -
+                        song_similar_b->song_features->features[feature][stat];
+                }
             }
             
             // get ready for next set
@@ -97,15 +95,23 @@ int main(int argc, const char *argv[])
     }
     
     // normalise the weights
-    float max = 0;
-    for (int i = 0; i < 32; i++) {
-        if (weights[i] > max) {
-            max = weights[i];
+    float max = weights[0][0];
+    float min = weights[0][0];
+    for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+        for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+            if (weights[feature][stat] > max) {
+                max = weights[feature][stat];
+            }
+            if (weights[feature][stat] < min) {
+                min = weights[feature][stat];
+            }
         }
     }
-    for (int i = 0; i < 32; i++) {
-        weights[i] /= max;
-        std::cout << weights[i] << ",";
+    for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+        for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+            weights[feature][stat] = (weights[feature][stat] - min) / (max - min);
+            std::cout << weights[feature][stat] << ",";
+        }
     }
     
     return 0;
