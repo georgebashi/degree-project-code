@@ -42,6 +42,7 @@ class Song
         void setSongFeatures(FeatureGroup* song_features);
         void write(std::ofstream* output);
         std::string get_artist();
+        std::string get_album();
         float compare(Song* other);
         float compare(Song* other, float (*weights)[NUMBER_OF_AGGREGATE_STATS], int comparison_function);
         std::string filename;

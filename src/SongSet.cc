@@ -54,7 +54,10 @@ void SongSet::normalise()
 #define MAX 1
     float song_vector[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS][2];
     float block_vector[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS][2];
-    
+    if (!this->size()) {
+        std::cerr << "No songs loaded" << std::endl;
+        exit(0);
+    }
     // initialise with first values from first song
     for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
         for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {

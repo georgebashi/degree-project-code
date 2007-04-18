@@ -26,11 +26,11 @@ FeatureGroup::FeatureGroup(std::vector<FeatureSet *>* sets)
         for (unsigned int i = 0; i < data_points; i++) {
             data[i] = sets->at(i)->features[feature];
         }
-        features[feature][MEAN] = get_mean(data, data_points);
-        features[feature][VARIANCE] = get_variance(data, features[feature][MEAN], data_points);
-        float stdev = get_stdev(features[feature][VARIANCE]);
-        features[feature][SKEWNESS] = get_skewness(data, features[feature][MEAN], stdev, data_points);
-        features[feature][KURTOSIS] = get_kurtosis(data, features[feature][MEAN], stdev, data_points);
+        features[feature][MEAN] = check_nan(get_mean(data, data_points));
+        features[feature][VARIANCE] = check_nan(get_variance(data, features[feature][MEAN], data_points));
+        float stdev = check_nan(get_stdev(features[feature][VARIANCE]));
+        features[feature][SKEWNESS] = check_nan(get_skewness(data, features[feature][MEAN], stdev, data_points));
+        features[feature][KURTOSIS] = check_nan(get_kurtosis(data, features[feature][MEAN], stdev, data_points));
     }
 }
 
@@ -66,7 +66,7 @@ float get_variance(float *data, float mean, int n)
 {
     float total = 0;
     for (int i = 0; i < n; i++) {
-        total += pow(data[i] - mean, 2);
+        total += powf(data[i] - mean, 2);
     }
     return total / (n - 1);
 }
@@ -78,7 +78,7 @@ float get_skewness(float *data, float mean, float stdev, int n)
 {
     float total = 0;
     for (int i = 0; i < n; i++) {
-        total += pow(data[i] - mean, 3);
+        total += powf(data[i] - mean, 3);
     }
     return total / (n * pow(stdev, 3));
 }
@@ -86,7 +86,7 @@ float get_kurtosis(float *data, float mean, float stdev, int n)
 {
     float total = 0;
     for (int i = 0; i < n; i++) {
-        total += pow(data[i] - mean, 4);
+        total += powf(data[i] - mean, 4);
     }
     return total / (WINDOWS_PER_BLOCK * pow(stdev, 4));
 }
@@ -108,7 +108,7 @@ FeatureSet* FeatureExtractor::process(float* signal, float* fft)
 }
 inline float check_nan(float n)
 {
-    return (std::isnormal(n) ? n : 0);
+    return (std::fpclassify(n) == FP_NORMAL ? n : 0);
 }
 
 float FeatureExtractor::zero_crossing_rate(float *signal)
@@ -167,9 +167,9 @@ float FeatureExtractor::energy(float *signal)
 {
     float Sxi = 0;
     for (int i = 0; i < WINDOW_SIZE; i++) {
-        Sxi += pow(signal[i], 2);
+        Sxi += powf(signal[i], 2.0f);
     }
-    return (1 / WINDOW_SIZE) * Sxi;
+    return (1.0f / WINDOW_SIZE) * Sxi;
 }
 
 float FeatureExtractor::spectral_smoothness(float *fft)
@@ -190,7 +190,7 @@ float FeatureExtractor::spectral_spread(float spectral_centroid, float *fft)
 {
     float top = 0, bottom = 0;
     for (int i = 1; i < BINS; i++) {
-        top += fft[i] * pow((((float)i / BINS) * 22100) - spectral_centroid, 2);
+        top += fft[i] * powf((((float)i / BINS) * 22100) - spectral_centroid, 2);
         bottom += fft[i];
     }
     return sqrtf(top / bottom);
@@ -200,7 +200,7 @@ float FeatureExtractor::spectral_dissymmetry(float spectral_centroid, float *fft
 {
     float top = 0, bottom = 0;
     for (int i = 1; i < BINS; i++) {
-        top += fft[i] * pow((((float)i / BINS) * 22100) - spectral_centroid, 3);
+        top += fft[i] * powf((((float)i / BINS) * 22100) - spectral_centroid, 3);
         bottom += fft[i];
     }
     return cbrtf(top / bottom);

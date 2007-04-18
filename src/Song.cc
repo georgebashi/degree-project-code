@@ -131,6 +131,18 @@ std::string Song::get_artist()
     return filename.substr(slash_pos[3] + 1, slash_pos[2] - slash_pos[3] - 1);
 }
 
+std::string Song::get_album()
+{
+    unsigned int slash_pos[filename.length()];
+    slash_pos[0] = filename.length();
+    for (unsigned int i = 1; i < filename.length(); i++) {
+        slash_pos[i] = filename.rfind("/", slash_pos[i - 1] - 1);
+        if (slash_pos[i] == std::string::npos) { break; }
+    }
+    // between 3 and 2
+    return filename.substr(slash_pos[2] + 1, slash_pos[1] - slash_pos[2] - 1);
+}
+
 float Song::compare(Song* other)
 {
     float weights[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS] =

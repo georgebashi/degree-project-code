@@ -5,6 +5,7 @@
 #include <popt.h>
 #include <string>
 #include <cmath>
+#include <map>
 
 #include "common.hh"
 #include "Features.hh"
@@ -51,6 +52,40 @@ int main(int argc, const char *argv[])
     }
     
     std::cout << song_vectors.size() << " songs loaded" << std::endl;
+    
+    std::map<std::string, std::vector<Song *> > albums;
+    for (unsigned int i = 0; i < song_vectors.size(); i++) {
+        std::string new_album = song_vectors.at(i)->get_album();
+        std::map<std::string, std::vector<Song *> >::iterator other_tracks = albums.find(new_album);
+        if (other_tracks == albums.end()) {
+            std::vector<Song *> new_vector;
+            new_vector.push_back(song_vectors.at(i));
+            albums[new_album] = new_vector;
+        } else {
+            other_tracks->second.push_back(song_vectors.at(i));
+        }
+    }
+    
+    for(
+        std::map<std::string, std::vector<Song *> >::iterator iter = albums.begin();
+        iter != albums.end();
+        iter++
+    ) {
+        for (unsigned int i = 0; i < iter->second.size() - 1; i++) {
+            for (unsigned int j = i + 1; j < iter->second.size(); j++) {
+                for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+                    for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
+                        weights[feature][stat] +=
+                            (1 -
+                             iter->second.at(i)->song_features->features[feature][stat] -
+                             iter->second.at(j)->song_features->features[feature][stat]) /
+                            iter->second.size()
+                            ;
+                    }
+                }
+            }
+        }
+    }
     
     std::string line, similar_a, similar_b, not_similar;
     std::ifstream results_reader;
@@ -108,9 +143,18 @@ int main(int argc, const char *argv[])
         }
     }
     for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+        std::cout << "{ ";
         for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
             weights[feature][stat] = (weights[feature][stat] - min) / (max - min);
-            std::cout << weights[feature][stat] << ",";
+            std::cout << weights[feature][stat];
+            if (stat != NUMBER_OF_AGGREGATE_STATS - 1) {
+                std::cout << ", ";
+            }
+        }
+        if (feature != NUMBER_OF_FEATURES - 1) {
+            std::cout << "}, " << std::endl;
+        } else {
+            std::cout << "}" << std::endl;
         }
     }
     
