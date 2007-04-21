@@ -48,7 +48,7 @@ float FeatureGroup::compare(FeatureGroup* other, float (*weights)[NUMBER_OF_AGGR
     float diff = 0;
     for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
         for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
-            diff += fabsf((features[feature][stat] - other->features[feature][stat]) * weights[feature][stat]);
+            diff += fabsf(features[feature][stat] - other->features[feature][stat]) * weights[feature][stat];
         }
     }
     return diff;

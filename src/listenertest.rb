@@ -19,8 +19,8 @@ def play(file, num_beeps = 0)
 		`beep -f 300 -r 1 -d 100 -l 400 > /dev/null 2>&1`
 		sleep 0.2
 	end
-	`mplayer -ss 00:01:00 -endpos 00:00:5 "#{file}" > /dev/null 2>&1`
-	`mplayer -ss 00:02:00 -endpos 00:00:5 "#{file}" > /dev/null 2>&1`
+	`mplayer -af volnorm -ss 00:01:00 -endpos 00:00:5 "#{file}" > /dev/null 2>&1`
+	`mplayer -af volnorm -ss 00:02:00 -endpos 00:00:5 "#{file}" > /dev/null 2>&1`
 	sleep 0.2
 end
 

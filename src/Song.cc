@@ -197,11 +197,10 @@ float Song::compare(Song* other, float (*weights)[NUMBER_OF_AGGREGATE_STATS], in
             break;
         }
         case TOTAL: {
-            unsigned int i = 0, j = 0;
-            for (i = 0; i < feature_blocks->size(); i++) {
-                for (j = 0; j < other->feature_blocks->size(); j++) {
+            unsigned int i = 0, j = 0, i_size = feature_blocks->size(), j_size = other->feature_blocks->size();
+            for (i = 0; i < i_size; i++) {
+                for (j = 0; j < j_size; j++) {
                     block_diff += feature_blocks->at(i)->compare(other->feature_blocks->at(j), weights);
-                    CHECK(block_diff)
                 }
             }
             return (song_diff * SONG_FEATURE_WEIGHT) + ((block_diff / (i * j)) * BLOCK_FEATURE_WEIGHT);
