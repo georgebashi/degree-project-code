@@ -57,24 +57,19 @@ end
 
 def playlist_position(playlist, track)
 	pos = 0
+	found = false
 	for i in 0...playlist.size
-		break if playlist.at(i).strip == track.strip
+		if playlist.at(i).strip == track.strip
+			found = true
+			break
+		end
 		pos += 1
 	end
-	pos
-end
-
-def rate(key, similar, not_similar, comparison)
-	playlist = get_similar(key, comparison)
-	playlist_position(playlist, similar) + (@song_count - playlist_position(playlist, not_similar))
-end
-
-def test(comparison)
-	scores = Array.new
-	@results.each { |result|
-		scores << rate(result[0], result[1], result[2], comparison)
-	}
-	scores
+	if not found
+		-1
+	else
+		pos
+	end
 end
 
 @results = Array.new
@@ -93,8 +88,13 @@ for comparison in ["ordered", "ordered-area", "sorted", "total"]
 	pos_not_similar = Array.new
 	@results.each { |result|
 		playlist = get_similar(result[0], comparison)
-		pos_similar << playlist_position(playlist, result[1])
-		pos_not_similar << playlist_position(playlist, result[2])
+
+		tmp_pos_similar = playlist_position(playlist, result[1])
+		tmp_pos_not_similar = playlist_position(playlist, result[2])
+		next if tmp_pos_similar == -1 or tmp_pos_not_similar == -1
+
+		pos_similar << tmp_pos_similar
+		pos_not_similar << tmp_pos_not_similar
 	}
 
 	similar_avg = pos_similar.average
