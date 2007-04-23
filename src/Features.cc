@@ -1,5 +1,10 @@
 // $Id$
 
+/*
+Feature classes
+Handles everything to do with storing, computing and manipulating features.
+*/
+
 #include <cmath>
 #include <vector>
 
@@ -7,25 +12,29 @@
 #include "Song.hh"
 #include "Features.hh"
 
+// Create the storage for a set of features
 FeatureSet::FeatureSet(float** features)
 {
     this->features = *features;
 }
+// Delete it once it goes out of scopre
 FeatureSet::~FeatureSet()
 {
     delete[] features;
 }
 
+// Create a feature block from a vector of window-level features
 FeatureGroup::FeatureGroup(std::vector<FeatureSet *>* sets)
 {
     for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
+        // Rotate the array so it's easier to work with when generating stats
         unsigned int data_points = sets->size();
-        
         float data[data_points];
-        
         for (unsigned int i = 0; i < data_points; i++) {
             data[i] = sets->at(i)->features[feature];
         }
+        
+        // Compute the mean, variance, skewness and kurtosis for this block
         features[feature][MEAN] = check_nan(get_mean(data, data_points));
         features[feature][VARIANCE] = check_nan(get_variance(data, features[feature][MEAN], data_points));
         float stdev = check_nan(get_stdev(features[feature][VARIANCE]));
@@ -34,6 +43,7 @@ FeatureGroup::FeatureGroup(std::vector<FeatureSet *>* sets)
     }
 }
 
+// Interpolate a new feature block from the two specified
 FeatureGroup::FeatureGroup(FeatureGroup* fg1, FeatureGroup* fg2, float dist)
 {
     for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
@@ -43,6 +53,7 @@ FeatureGroup::FeatureGroup(FeatureGroup* fg1, FeatureGroup* fg2, float dist)
     }
 }
 
+// Compare two feature blocks
 float FeatureGroup::compare(FeatureGroup* other, float (*weights)[NUMBER_OF_AGGREGATE_STATS])
 {
     float diff = 0;
@@ -54,6 +65,7 @@ float FeatureGroup::compare(FeatureGroup* other, float (*weights)[NUMBER_OF_AGGR
     return diff;
 }
 
+// Helper functions to compute the mean, variance, skewness and kurtosis.
 float get_mean(float *data, int n)
 {
     float total = 0;
@@ -91,6 +103,7 @@ float get_kurtosis(float *data, float mean, float stdev, int n)
     return total / (WINDOWS_PER_BLOCK * pow(stdev, 4));
 }
 
+// Computes the features for a window based on the signal and FFT data, returning a new FeatureSet
 FeatureSet* FeatureExtractor::process(float* signal, float* fft)
 {
     float* features = new float[NUMBER_OF_FEATURES];
@@ -106,10 +119,14 @@ FeatureSet* FeatureExtractor::process(float* signal, float* fft)
     
     return new FeatureSet(&features);
 }
+
+// Check for invalid values returned by the extractors
 inline float check_nan(float n)
 {
     return (std::fpclassify(n) == FP_NORMAL ? n : 0);
 }
+
+// From here on, functions to extract features based on signal or FFT data.
 
 float FeatureExtractor::zero_crossing_rate(float *signal)
 {

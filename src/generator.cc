@@ -1,9 +1,15 @@
 // $Id$
 
+/*
+Playlist Generator
+ 
+*/
+
 #include <vector>
 #include <fnmatch.h>
 #include <popt.h>
 #include <string>
+#include <cmath>
 
 #include "common.hh"
 #include "Features.hh"
@@ -60,23 +66,14 @@ int main(int argc, const char *argv[])
     }
     
     float comparison_weights[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS] = {
-                { 1, 1, 1, 1},
-                { 1, 1, 1, 1},
-                { 1, 1, 1, 1},
-                { 1, 1, 1, 1},
-                { 1, 1, 1, 1},
-                { 1, 1, 1, 1},
-                { 1, 1, 1, 1},
-                { 1, 1, 1, 1}
-                /*{ 0.704065, 0.963366, 0.719998, 0.986178},
-                { 0.822399, 0.957612, 0.772292, 0.991212}, 
-                { 0.821112, 0.943945, 0.775205, 0.996049}, 
-                { 0.820023, 0.970565, 0.7805, 0.964635}, 
-                { 0.854866, 0.960014, 0.773619, 0.991918}, 
-                { 0.808376, 0.73399, 0, 0.812348}, 
-                { 0.520966, 0.84386, 0.849893, 0.999817}, 
-                { 0.111331, 0.932152, 0.742538, 1}*/
-            };
+{ 0.613092, 0.205134, 0.533735, 0.110462}, 
+{ 0.306893, 0.132636, 0.453016, 0.0505156}, 
+{ 0.321113, 0.183988, 0.485224, 0.0169958}, 
+{ 0.459398, 0.206291, 0.48236, 0.260304}, 
+{ 0.279731, 0.121066, 0.449003, 0.0465693}, 
+{ 0.677096, 1, 0.786617, 0.545458}, 
+{ 0.997773, 0.680246, 0.306549, 0.0242729}, 
+{ 0.718418, 0.303971, 0.29711, 0}            };
     weights = comparison_weights;
     
     if (n_similar) {
@@ -108,8 +105,10 @@ int main(int argc, const char *argv[])
         std::sort(song_vectors.begin(), song_vectors.end(), song_cmp);
         
         for (int i = 0; i < n_similar; i++) {
+        	float score = key->compare(song_vectors.at(i), weights, comparison_function);
+        	if (!std::isnormal(score)) { n_similar++; continue; }
             if (verbose) {
-                std::cout << song_vectors.at(i)->filename << " (" << key->compare(song_vectors.at(i), weights, comparison_function) << ")" << std::endl;
+                std::cout << song_vectors.at(i)->filename.substr(0, song_vectors.at(i)->filename.length() - 4) << " (" << score << ")" << std::endl;
             } else {
                 std::cout << song_vectors.at(i)->filename.substr(0, song_vectors.at(i)->filename.length() - 4) << std::endl;
             }

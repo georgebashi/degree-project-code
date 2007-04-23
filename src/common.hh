@@ -1,5 +1,10 @@
 // $Id$
 
+/*
+Common macros used throughout the system.
+All files should #include this.
+*/
+
 #ifndef COMMON_HH
 #define COMMON_HH
 

@@ -137,11 +137,12 @@ Playlist::Playlist(SongSet *songs, std::vector<Song *> keys, int add_tracks, flo
 void Playlist::print()
 {
     for (unsigned int key = 0; key < keys.size() - 1; key++) {
-        std::cout << keys.at(key)->filename << std::endl;
+        std::cout << keys.at(key)->filename.substr(0, keys.at(key)->filename.length() - 4) << std::endl;
         for (unsigned int entry = 0; entry < entries[key].size(); entry++) {
-            std::cout << entries[key][entry]->getBestMatch()->filename << std::endl;
+        	std::string filename = entries[key][entry]->getBestMatch()->filename;
+            std::cout << filename.substr(0, filename.length() - 4) << std::endl;
         }
     }
-    std::cout << keys.back()->filename << std::endl;
+    std::cout << keys.back()->filename.substr(0, keys.back()->filename.length() - 4) << std::endl;
 }
 

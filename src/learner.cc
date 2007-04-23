@@ -76,8 +76,7 @@ int main(int argc, const char *argv[])
                 for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
                     for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
                         weights[feature][stat] +=
-                            (1 -
-                             iter->second.at(i)->song_features->features[feature][stat] -
+                             fabsf(iter->second.at(i)->song_features->features[feature][stat] -
                              iter->second.at(j)->song_features->features[feature][stat]) /
                             iter->second.size()
                             ;
@@ -115,9 +114,8 @@ int main(int argc, const char *argv[])
             for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
                 for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
                     weights[feature][stat] +=
-                        1 -
-                        song_similar_a->song_features->features[feature][stat] -
-                        song_similar_b->song_features->features[feature][stat];
+                        fabsf(song_similar_a->song_features->features[feature][stat] -
+                        song_similar_b->song_features->features[feature][stat]);
                 }
             }
             

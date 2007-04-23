@@ -1,5 +1,10 @@
 // $Id$
 
+/*
+FFT Wrapper class
+Wraps around the FFTW3 library, handling the set up, running and cleaning up after the FFT processing.
+*/
+
 #include <cmath>
 #include <string>
 #include <fftw3.h>
@@ -7,9 +12,10 @@
 #include "common.hh"
 #include "FFT.hh"
 
+// set up the FFT
 FFT::FFT(float *out)
 {
-    // create and store hanning window
+    // Create and store a hanning window
     hanning_window = new float[WINDOW_SIZE];
     fft_input = (float *) fftwf_malloc(sizeof(float) * WINDOW_SIZE);
     float ang = (1.0 / WINDOW_SIZE) * TWOPI;
@@ -17,6 +23,8 @@ FFT::FFT(float *out)
     for (int i = 0; i < WINDOW_SIZE; i++) {
         hanning_window[i] = 0.5 - 0.5 * cos(ang * i);
     }
+    
+    // If the FFT wisdom file exists, load it; otherwise profile the machine for the fastest FFT algorithm and save it.
     FILE* wisdom;
     if ((wisdom = fopen("/home/george/.extractor/wisdom", "r")) != NULL) {
         // fftw leaks memory malloc'd in this call...
@@ -33,6 +41,7 @@ FFT::FFT(float *out)
     }
 }
 
+// Clean up after the FFT processing
 FFT::~FFT()
 {
     fftwf_free(fft_input);
@@ -41,6 +50,7 @@ FFT::~FFT()
     fftwf_destroy_plan(plan);
 }
 
+// Process a window of audio data
 void FFT::do_window(float *in)
 {
     memcpy(fft_input, in, WINDOW_SIZE * sizeof(float));
@@ -52,6 +62,7 @@ void FFT::do_window(float *in)
     fftwf_execute(plan);
 }
 
+// Fix the output - FFTW3 returns an array with [0] being the sum of all bins, and the second half being a mirror image of the first
 void FFT::fix_output(float *output)
 {
     // fix power
