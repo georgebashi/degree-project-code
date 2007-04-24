@@ -103,10 +103,10 @@ int main(int argc, const char *argv[])
         }
         
         std::sort(song_vectors.begin(), song_vectors.end(), song_cmp);
-        
-        for (int i = 0; i < n_similar; i++) {
+        unsigned int tracks_to_return = n_similar < song_vectors.size() ? n_similar : song_vectors.size();
+        for (int i = 0; i < tracks_to_return; i++) {
         	float score = key->compare(song_vectors.at(i), weights, comparison_function);
-        	if (!std::isnormal(score)) { n_similar++; continue; }
+        	//if (!std::isnormal(score)) { n_similar++; continue; }
             if (verbose) {
                 std::cout << song_vectors.at(i)->filename.substr(0, song_vectors.at(i)->filename.length() - 4) << " (" << score << ")" << std::endl;
             } else {
