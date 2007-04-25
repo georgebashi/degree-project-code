@@ -66,14 +66,14 @@ int main(int argc, const char *argv[])
     }
     
     float comparison_weights[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS] = {
-{ 0.613092, 0.205134, 0.533735, 0.110462}, 
-{ 0.306893, 0.132636, 0.453016, 0.0505156}, 
-{ 0.321113, 0.183988, 0.485224, 0.0169958}, 
-{ 0.459398, 0.206291, 0.48236, 0.260304}, 
-{ 0.279731, 0.121066, 0.449003, 0.0465693}, 
-{ 0.677096, 1, 0.786617, 0.545458}, 
-{ 0.997773, 0.680246, 0.306549, 0.0242729}, 
-{ 0.718418, 0.303971, 0.29711, 0}            };
+                { 0.613092, 0.205134, 0.533735, 0.110462},
+                { 0.306893, 0.132636, 0.453016, 0.0505156},
+                { 0.321113, 0.183988, 0.485224, 0.0169958},
+                { 0.459398, 0.206291, 0.48236, 0.260304},
+                { 0.279731, 0.121066, 0.449003, 0.0465693},
+                { 0.677096, 1, 0.786617, 0.545458},
+                { 0.997773, 0.680246, 0.306549, 0.0242729},
+                { 0.718418, 0.303971, 0.29711, 0}            };
     weights = comparison_weights;
     
     if (n_similar) {
@@ -105,8 +105,8 @@ int main(int argc, const char *argv[])
         std::sort(song_vectors.begin(), song_vectors.end(), song_cmp);
         unsigned int tracks_to_return = n_similar < song_vectors.size() ? n_similar : song_vectors.size();
         for (int i = 0; i < tracks_to_return; i++) {
-        	float score = key->compare(song_vectors.at(i), weights, comparison_function);
-        	//if (!std::isnormal(score)) { n_similar++; continue; }
+            float score = key->compare(song_vectors.at(i), weights, comparison_function);
+            if (!std::isnormal(score)) { tracks_to_return++; continue; }
             if (verbose) {
                 std::cout << song_vectors.at(i)->filename.substr(0, song_vectors.at(i)->filename.length() - 4) << " (" << score << ")" << std::endl;
             } else {

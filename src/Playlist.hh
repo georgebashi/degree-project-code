@@ -3,19 +3,25 @@
 #ifndef PLAYLIST_HH
 #define PLAYLIST_HH
 
+
 bool playlist_song_cmp(Song* s1, Song* s2);
 
 class PlaylistEntry
 {
     public:
         PlaylistEntry(SongSet *candidiates, Song *key1, Song* key2, float dist);
+        PlaylistEntry(Song *key);
         void removeArtist(std::string artist);
+        void removeTrack(std::string filename);
         Song *getBestMatch();
         float getScore();
+        
+        PlaylistEntry* neighbour1;
+        PlaylistEntry* neighbour2;
     private:
         PlaylistEntry() {};
-        Song* key1;
-        Song* key2;
+        Song* key;
+        bool isKey;
         float dist;
         std::vector<Song *> candidates;
 };
@@ -28,7 +34,7 @@ class Playlist
     private:
         Playlist() {};
         int add_tracks;
-        std::vector<Song *> keys;
+        std::vector<PlaylistEntry *> keys;
         std::vector<std::vector<PlaylistEntry *> > entries;
 };
 
