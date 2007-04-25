@@ -177,7 +177,6 @@ Playlist::Playlist(SongSet *songs, std::vector<Song *> keys, int add_tracks, flo
             std::map<std::string, std::vector<PlaylistEntry *> > tracks;
             for (unsigned int key = 0; key < keys.size() - 1; key++) {
                 for (unsigned int entry = 0; entry < entries[key].size(); entry++) {
-                    //std::cout << key << ";" << ";" << entry << ";" << entries[key][entry]->getBestMatch()->get_artist() << ";" << entries[key][entry]->getBestMatch()->get_album() << ";" << entries[key][entry]->getBestMatch()->filename << std::endl;
                     std::string new_filename = entries[key][entry]->getBestMatch()->filename;
                     std::map<std::string, std::vector<PlaylistEntry *> >::iterator other_tracks = tracks.find(new_filename);
                     if (other_tracks == tracks.end()) {
@@ -214,11 +213,6 @@ Playlist::Playlist(SongSet *songs, std::vector<Song *> keys, int add_tracks, flo
                     playlist_bad = 1;
                 }
             }
-        }
-    }
-    for (unsigned int key = 0; key < keys.size() - 1; key++) {
-        for (unsigned int entry = 0; entry < entries[key].size(); entry++) {
-            std::cout << key << ";" << ";" << entry << ";" << entries[key][entry]->getBestMatch()->get_artist() << ";" << entries[key][entry]->getBestMatch()->get_album() << ";" << entries[key][entry]->getBestMatch()->filename << std::endl;
         }
     }
 }
