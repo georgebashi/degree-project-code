@@ -1,5 +1,10 @@
 // $Id$
 
+/*
+SoundFile class
+Handles the reading of a mono .wav file (the output of gstreamer) using libsndfile
+*/
+
 #include <string>
 #include <sndfile.h>
 #include <iostream>
@@ -32,6 +37,7 @@ SoundFile::SoundFile(std::string filename)
     }
 }
 
+// close file and free memory
 SoundFile::~SoundFile()
 {
     sf_close(sf_in);
@@ -40,6 +46,7 @@ SoundFile::~SoundFile()
     free(tmp_filename);
 }
 
+// read in n samples, returning 0 if unable (end of file)
 int SoundFile::read(float* buffer, int n)
 {
     if (sf_readf_float(sf_in, buffer, n) != n) {

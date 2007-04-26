@@ -2,7 +2,8 @@
 
 /*
 Playlist Generator
- 
+Has options to either return the n most similar tracks or interpolate a playlist.
+-c specifies the comparison algorithm to use.
 */
 
 #include <vector>
@@ -119,7 +120,7 @@ int main(int argc, const char *argv[])
                 std::cout << song_vectors.at(i)->filename.substr(0, song_vectors.at(i)->filename.length() - 4) << std::endl;
             }
         }
-    // if we are interpolating a playlist
+        // if we are interpolating a playlist
     } else if (interpolate) {
         if (key_songs == NULL) {
             std::cout << "Please specify some key songs" << std::endl;

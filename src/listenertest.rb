@@ -2,6 +2,9 @@
 
 # $Id$
 
+# Music Quiz listener test
+# Plays extracts of random songs from the media library and asks the user which are most similar
+
 require 'find'
 
 songs = Array.new
@@ -14,6 +17,7 @@ Find.find("../test/") { |file|
 
 puts "Loaded #{songs.size} songs\n"
 
+# play an audio file with a number of beeps
 def play(file, num_beeps = 0)
 	num_beeps.times do
 		`beep -f 300 -r 1 -d 100 -l 400 > /dev/null 2>&1`
@@ -24,16 +28,19 @@ def play(file, num_beeps = 0)
 	sleep 0.2
 end
 
+# get stored info on a song
 def info(file)
 	`mplayer -identify -endpos 0:00:00 "#{file}" | grep ID_CLIP_INFO_VALUE | cut -c 21- | xargs echo 1>&2`
 end
 
+# save a result
 def save(similar_a, similar_b, not_similar)
 	output = File.new("results.txt", "a")
 	output.puts "#{similar_a} * #{similar_b} * #{not_similar}"
 	output.close
 end
 
+# run the test
 while true
 	puts "\n-------------------------------------------------------------\n"
 	a = songs[rand(songs.size)].chop.chop.chop.chop

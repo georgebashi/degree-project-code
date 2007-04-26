@@ -32,6 +32,7 @@ int main(int argc, const char *argv[])
         exit(EXIT_SUCCESS);
     }
     
+    // initial weights
     float weights[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS] = {
                 { 0, 0, 0, 0 },
                 { 0, 0, 0, 0 },
@@ -43,6 +44,8 @@ int main(int argc, const char *argv[])
                 { 0, 0, 0, 0 }
             };
             
+            
+    // read in stored feature vectors
     SongSet song_vectors(dir);
     song_vectors.normalise();
     
@@ -53,6 +56,7 @@ int main(int argc, const char *argv[])
     
     std::cout << song_vectors.size() << " songs loaded" << std::endl;
     
+    // collate all tracks from the same albums
     std::map<std::string, std::vector<Song *> > albums;
     for (unsigned int i = 0; i < song_vectors.size(); i++) {
         std::string new_album = song_vectors.at(i)->get_album();
@@ -66,6 +70,7 @@ int main(int argc, const char *argv[])
         }
     }
     
+    // loop over each album group, using it as a training set of data
     for(
         std::map<std::string, std::vector<Song *> >::iterator iter = albums.begin();
         iter != albums.end();
@@ -86,12 +91,14 @@ int main(int argc, const char *argv[])
         }
     }
     
+    // read in results.txt
     std::string line, similar_a, similar_b, not_similar;
     std::ifstream results_reader;
     char delim = '*';
     results_reader.open(results_file);
     
     while (getline(results_reader, line, delim)) {
+        // extract the three file names
         if (similar_a.empty()) {
             similar_a = line;
         } else if (similar_b.empty()) {
@@ -111,6 +118,7 @@ int main(int argc, const char *argv[])
                 continue;
             }
             
+            // train
             for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
                 for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {
                     weights[feature][stat] +=
@@ -140,6 +148,8 @@ int main(int argc, const char *argv[])
             }
         }
     }
+    
+    // output them
     for (int feature = 0; feature < NUMBER_OF_FEATURES; feature++) {
         std::cout << "{ ";
         for (int stat = 0; stat < NUMBER_OF_AGGREGATE_STATS; stat++) {

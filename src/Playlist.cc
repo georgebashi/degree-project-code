@@ -1,5 +1,13 @@
 // $Id$
 
+/*
+ 
+Playlist classes
+PlaylistEntry represents one position in the playlist, be it a key song or a song to be found via interpolation.
+Playlist represents a playlist as a whole, and on construction generates a playlist
+ 
+*/
+
 #include <string>
 #include <vector>
 
@@ -17,6 +25,7 @@ FeatureGroup *playlist_desired;
 float (*playlist_weights)[NUMBER_OF_AGGREGATE_STATS];
 int playlist_comparison_function;
 
+// Create a playlist entry for an interpolated track, key1 and key2 being the two neighbouring keys, and dist being the distance between them
 PlaylistEntry::PlaylistEntry(SongSet *candidates, Song *key1, Song* key2, float dist)
 {
     for (unsigned int i = 0; i < candidates->size(); i++) {
@@ -29,12 +38,14 @@ PlaylistEntry::PlaylistEntry(SongSet *candidates, Song *key1, Song* key2, float 
     this->isKey = false;
 }
 
+// Create a playlist entry for a key song
 PlaylistEntry::PlaylistEntry(Song *key)
 {
     this->key = key;
     this->isKey = true;
 }
 
+// Return the score used in evaluating which tracks should be removed in the case of repeated artists
 float PlaylistEntry::getScore()
 {
     float neighbour_score = 0;
@@ -43,6 +54,7 @@ float PlaylistEntry::getScore()
     return (std::isnormal(neighbour_score) ? neighbour_score : 9999.0f);
 }
 
+// Get the track best for this position in the playlist
 Song* PlaylistEntry::getBestMatch()
 {
     if (isKey) {
@@ -52,6 +64,7 @@ Song* PlaylistEntry::getBestMatch()
     }
 }
 
+// Remove tracks by the specified artist from the list of possible tracks for this entry
 void PlaylistEntry::removeArtist(std::string artist)
 {
     for (unsigned int i = 0; i < candidates.size(); i++) {
@@ -62,6 +75,7 @@ void PlaylistEntry::removeArtist(std::string artist)
     }
 }
 
+// Remove the specified track from the list of possible results, to prevent identical repeated tracks
 void PlaylistEntry::removeTrack(std::string filename)
 {
     for (unsigned int i = 0; i < candidates.size(); i++) {
@@ -72,11 +86,13 @@ void PlaylistEntry::removeTrack(std::string filename)
     }
 }
 
+// comparator used in sorting method to sort by similarity
 bool playlist_song_cmp(Song* s1, Song* s2)
 {
     return playlist_desired->compare(s1->song_features, playlist_weights) < playlist_desired->compare(s2->song_features, playlist_weights);
 }
 
+// create a playlist from the media library loaded into songs, with the specified keys, interpolating add_tracks between them, using the weights specified
 Playlist::Playlist(SongSet *songs, std::vector<Song *> keys, int add_tracks, float (*weights)[NUMBER_OF_AGGREGATE_STATS], int comparison_function)
 {
     playlist_weights = weights;
@@ -107,6 +123,7 @@ Playlist::Playlist(SongSet *songs, std::vector<Song *> keys, int add_tracks, flo
         entries[key][entries.at(key).size() - 1]->neighbour2 = this->keys[key + 1];
     }
     
+    // initially remove tracks by the same artist as keys, as this does not require scores to be considered
     for (unsigned int key = 0; key < keys.size() - 1; key++) {
         std::string key_artist = this->keys.at(key)->getBestMatch()->get_artist();
         for (unsigned int entry = 0; entry < entries.at(key).size(); entry++) {
@@ -118,20 +135,21 @@ Playlist::Playlist(SongSet *songs, std::vector<Song *> keys, int add_tracks, flo
             }
         }
     }
-    
     for (unsigned int entry = 0; entry < entries.back().size(); entry++) {
         entries.back().at(entry)->removeArtist(keys.back()->get_artist());
     }
     
-    // remove tracks by the same artist between two keys
+    
     int playlist_bad = 1;
     while (playlist_bad != 0) {
         playlist_bad = 0;
+        // remove tracks by the same artist between two keys
         for (unsigned int key = 0; key < keys.size() - 1; key++) {
             int num_bad = 1;
             while (num_bad != 0) {
                 num_bad = 0;
                 std::map<std::string, std::vector<PlaylistEntry *> > artist_map;
+                
                 
                 for (unsigned int entry = 0; entry < entries[key].size(); entry++) {
                     std::string new_artist = entries[key][entry]->getBestMatch()->get_artist();
@@ -217,6 +235,7 @@ Playlist::Playlist(SongSet *songs, std::vector<Song *> keys, int add_tracks, flo
     }
 }
 
+// output the playlist in M3U format
 void Playlist::print()
 {
     for (unsigned int key = 0; key < keys.size() - 1; key++) {

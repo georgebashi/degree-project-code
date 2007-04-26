@@ -1,5 +1,10 @@
 // $Id$
 
+/*
+SongSet class
+Handles reading of all the tracks in the media library and normalising features.
+*/
+
 #include <string>
 #include <vector>
 #include <ftw.h>
@@ -13,6 +18,7 @@
 
 SongSet* initialising;
 
+// load songs from the specified directory
 SongSet::SongSet(std::string dir)
 {
     initialising = this;
@@ -21,6 +27,7 @@ SongSet::SongSet(std::string dir)
     ftw(dir.c_str(), read_song_files, 10);
 }
 
+// find song with the specified filename
 Song* SongSet::get_by_filename(std::string filename)
 {
     for (unsigned int i = this->size(); i--;) {
@@ -31,6 +38,7 @@ Song* SongSet::get_by_filename(std::string filename)
     return NULL;
 }
 
+// called by the SongSet constructor, creates Song objects and adds to the vector
 int read_song_files(const char *fpath, const struct stat *sb, int typeflag)
 {
     std::string filename(fpath);
@@ -48,6 +56,7 @@ int read_song_files(const char *fpath, const struct stat *sb, int typeflag)
     return 0;
 }
 
+// Once all files are loaded, this function is called to normalise all features into the range 0--1
 void SongSet::normalise()
 {
 #define MIN 0
