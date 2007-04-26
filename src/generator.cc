@@ -25,11 +25,11 @@ int comparison_function;
 
 int main(int argc, const char *argv[])
 {
-    // read options
+    // Read options
     poptContext context = poptGetContext("generator", argc, argv, options, 0);
     poptSetOtherOptionHelp(context, "[OPTION...] file.mp3");
     
-    // parse
+    // Parse
     display_version = 0;
     verbose = 0;
     n_similar = 0;
@@ -39,7 +39,7 @@ int main(int argc, const char *argv[])
     repeated_artist_str = "local";
     poptGetNextOpt(context);
     
-    // need at least 1 file arg
+    // Check there is at least 1 file arg
     if (argc == 1) {
         poptPrintUsage(context, stdout, 0);
         exit(EXIT_SUCCESS);
@@ -50,7 +50,7 @@ int main(int argc, const char *argv[])
         exit(EXIT_SUCCESS);
     }
     
-    // get file list
+    // Get file list
     const char ** key_songs = poptGetArgs(context);
     
     SongSet song_vectors(dir);
@@ -65,6 +65,7 @@ int main(int argc, const char *argv[])
         std::cout << song_vectors.size() << " songs loaded" << std::endl;
     }
     
+    // Weights from learner are inputted here
     float comparison_weights[NUMBER_OF_FEATURES][NUMBER_OF_AGGREGATE_STATS] = {
                 { 0.613092, 0.205134, 0.533735, 0.110462},
                 { 0.306893, 0.132636, 0.453016, 0.0505156},
@@ -76,6 +77,7 @@ int main(int argc, const char *argv[])
                 { 0.718418, 0.303971, 0.29711, 0}            };
     weights = comparison_weights;
     
+    // if we are doing similarity measure
     if (n_similar) {
         if (key_songs == NULL) {
             std::cout << "Please specify a key song with -s" << std::endl;
@@ -91,6 +93,7 @@ int main(int argc, const char *argv[])
             comparison_function = TOTAL;
         }
         
+        // find the key song
         for (unsigned int i = 0; i < song_vectors.size(); i++) {
             if (fnmatch(
                         (std::string("*") + std::string(key_songs[0]) + std::string("*")).c_str(),
@@ -102,7 +105,10 @@ int main(int argc, const char *argv[])
             }
         }
         
+        // sort the library based on similarity
         std::sort(song_vectors.begin(), song_vectors.end(), song_cmp);
+        
+        // and return the top n tracks
         unsigned int tracks_to_return = n_similar < song_vectors.size() ? n_similar : song_vectors.size();
         for (int i = 0; i < tracks_to_return; i++) {
             float score = key->compare(song_vectors.at(i), weights, comparison_function);
@@ -113,6 +119,7 @@ int main(int argc, const char *argv[])
                 std::cout << song_vectors.at(i)->filename.substr(0, song_vectors.at(i)->filename.length() - 4) << std::endl;
             }
         }
+    // if we are interpolating a playlist
     } else if (interpolate) {
         if (key_songs == NULL) {
             std::cout << "Please specify some key songs" << std::endl;
