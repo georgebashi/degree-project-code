@@ -5,6 +5,7 @@ Feature Extractor
 Reads in audio files specified on the command-line, computes features and stores these into .vec files.
 */
 
+#include <errno.h>
 #include <popt.h>
 #include <sys/stat.h>
 #include <fstream>
@@ -36,17 +37,17 @@ int main(int argc, const char *argv[])
     
     // Parse them
     display_version = 0;
-    poptGetNextOpt(context);
-    
-    // Check we have at least one file argument
-    if (argc == 1) {
-        poptPrintUsage(context, stdout, 0);
-        exit(EXIT_SUCCESS);
-    }
-    
+    int popt_parse_result = poptGetNextOpt(context);
+
     // Display version if asked
     if (display_version) {
         std::cout << "Feature Extractor: $Revision$" << std::endl;
+        exit(EXIT_SUCCESS);
+    }
+
+    // Check we have at least one file argument
+    if (argc == 1 || popt_parse_result != -1) {
+        poptPrintUsage(context, stdout, 0);
         exit(EXIT_SUCCESS);
     }
     
@@ -72,8 +73,14 @@ int main(int argc, const char *argv[])
         
         // Skip the file if it wasn't found or it can't be opened
         struct stat file_stat;
+        if (stat(filename.c_str(), &file_stat) == -1) {
+        	std::cout << ": " << strerror(errno) << std::endl;
+        	continue;
+        }
+        
+        // Skip if it's already been processed
         if (stat((filename + ".vec").c_str(), &file_stat) == 0) {
-            std::cout << ": skipping..." << std::endl;
+            std::cout << ": already processed, skipping..." << std::endl;
             continue;
         }
         
